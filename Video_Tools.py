@@ -47,7 +47,7 @@ def get_frame_dimensions(frame):
 
 
 def split_into_rgb_channels(image):
-    '''Split the target image into its red, green and blue channels.
+    '''Split the target video stream into its red, green and blue channels.
     image - a numpy array of shape (rows, columns, 3).
     output - three numpy arrays of shape (rows, columns) and dtype same as
              image, containing the corresponding channels.
@@ -70,7 +70,7 @@ def uint8_to_float(img):
     return result
 
 
-def temporal_bandpass_filter(data, fps, freq_min=0.833, freq_max=1, axis=0, amplification_factor=1):
+def temporal_bandpass_filter(data, fps, freq_min=0.75, freq_max=5.0, axis=0, amplification_factor=1):
     print("Applying bandpass between " + str(freq_min) + " and " + str(freq_max) + " Hz")
     fft = scipy.fftpack.rfft(data, axis=axis)
     frequencies = scipy.fftpack.fftfreq(data.shape[0], d=1.0 / fps)

@@ -43,12 +43,6 @@ def get_roi_means(roi_frame):
     return (v1 + v2 + v3) / 3.
 
 
-
-
-
-
-
-
 def temporal_bandpass_filter(data, fps, freq_min=0.833, freq_max=2.0, axis=0, amplification_factor=1):
     print("Applying bandpass between " + str(freq_min) + " and " + str(freq_max) + " Hz")
     fft = scipy.fftpack.rfft(data, axis=axis)
