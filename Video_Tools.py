@@ -70,8 +70,8 @@ def uint8_to_float(img):
     return result
 
 
-def temporal_bandpass_filter(data, fps, freq_min=0.75, freq_max=10.0, axis=0, amplification_factor=1):
-    print("Applying bandpass between " + str(freq_min) + " and " + str(freq_max) + " Hz")
+def temporal_bandpass_filter(data, fps, freq_min=0.75, freq_max=5.0, axis=0, amplification_factor=1):
+    # print("Applying bandpass between " + str(freq_min) + " and " + str(freq_max) + " Hz")
     fft = scipy.fftpack.rfft(data, axis=axis)
     frequencies = scipy.fftpack.fftfreq(data.shape[0], d=1.0 / fps)
     bound_low = (np.abs(frequencies - freq_min)).argmin()
