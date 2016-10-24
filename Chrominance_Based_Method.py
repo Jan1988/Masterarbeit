@@ -17,10 +17,24 @@ def normalization(colour_channel_values):
     return normalized_values
 
 
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = scipy.signal.butter(order, [low, high], btype='band')
+    return b, a
+
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = scipy.signal.lfilter(b, a, data)
+    return y
+
+
 if __name__ == '__main__':
     start_time = time.time()
 
-    filename = 'assets\\output_1.mp4'
+    filename = 'assets\\output_2.mp4'
     vid_data, fps = load_video(filename)
 
     # Color Channel Arrays
@@ -35,13 +49,12 @@ if __name__ == '__main__':
     roi_green_values = []
     roi_blue_values = []
 
-
     width, height = get_frame_dimensions(vid_data[0])
     center = (int(width/2), int(height/2))
     center_add = (int(width/2)+20, int(height/2)+20)
 
-
     roi = vid_data[:, int(width/2):int(width/2)+20, int(height/2):int(height/2)+20, :]
+
 
 
     i = 0
@@ -92,18 +105,52 @@ if __name__ == '__main__':
     # pulse signal S
     s = x - alpha * y
 
+    # s = temporal_bandpass_filter(s, 30)
+
     s2 = 3 * (1-alpha/2) * bandpassed_red - 2 * (1+alpha/2) * bandpassed_green + 3 * alpha / 2 * bandpassed_blue
 
+    plt.subplot(223)
+    plt.xlabel("Frames")
+    plt.ylabel("Pixel Average")
+    plt.plot(s)
+    plt.title('mean_values Image')
+    plt.xticks([])
+    plt.yticks([])
+
+    L = len(s)
+
+    hanning_window = np.hanning(L)
+
+    s = hanning_window * s
+
+    raw = np.fft.rfft(s, 512)
+
+    fft1 = np.abs(raw)
+
+    arranged = np.arange(L / 2 + 1)
+
+    freqs = fps / L * arranged
+
+    freqs_new = 60. * freqs
+
+    idx = np.where((freqs_new > 50) & (freqs_new < 210))
+
+    pruned = fft1[idx]
+    freqs_pruned = freqs_new[idx]
+    idx2 = np.argmax(pruned)
+    bpm = freqs_pruned[idx2]
+    print(bpm)
+
     # Fourier Transformation
-    freqs = scipy.fftpack.fftfreq(len(s), d=1.0 / fps)
-    fft = abs(scipy.fftpack.fft(s))
-
-    idx = np.argsort(freqs)
-    freqs = freqs[idx]
-    fft = fft[idx]
-
-    freqs = freqs[len(freqs) / 2 + 1:]
-    fft = fft[len(fft) / 2 + 1:]
+    # freqs = scipy.fftpack.fftfreq(len(s), d=1.0 / fps)
+    # fft = abs(scipy.fftpack.fft(s))
+    #
+    # idx = np.argsort(freqs)
+    # freqs = freqs[idx]
+    # fft = fft[idx]
+    #
+    # freqs = freqs[len(freqs) / 2 + 1:]
+    # fft = fft[len(fft) / 2 + 1:]
 
 
 
@@ -116,24 +163,26 @@ if __name__ == '__main__':
     plt.yticks([])
 
     plt.subplot(222)
-    plt.xlabel("Frames")
-    plt.ylabel("Pixel Average")
-    plt.plot(freqs, abs(fft))
-    plt.title('center_values Image')
+    plt.xlabel("Frequency (Hz)")
+    plt.ylabel("Amplitude")
+    plt.plot(fft1)
+    plt.title('fft1 Image')
     plt.xticks([])
     plt.yticks([])
 
-    plt.subplot(223)
-    plt.xlabel("Frames")
-    plt.ylabel("Pixel Average")
-    plt.plot(s)
-    plt.title('mean_values Image')
-    plt.xticks([])
-    plt.yticks([])
+    # plt.subplot(223)
+    # plt.xlabel("Frames")
+    # plt.ylabel("Pixel Average")
+    # plt.plot(s)
+    # plt.title('mean_values Image')
+    # plt.xticks([])
+    # plt.yticks([])
 
     plt.subplot(224)
-    plt.imshow(roi[i])
-    plt.title('ROI')
+    plt.xlabel("Frames")
+    plt.ylabel("Pixel Average")
+    plt.plot(pruned)
+    plt.title('pruned')
     plt.xticks([])
     plt.yticks([])
 
