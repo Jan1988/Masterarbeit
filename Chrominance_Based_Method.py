@@ -12,7 +12,7 @@ from Video_Tools import get_frame_dimensions
 
 def normalization(colour_channel_values):
     mean = np.mean(colour_channel_values)
-    normalized_values = colour_channel_values / mean
+    normalized_values = colour_channel_values - mean
 
     return normalized_values
 
@@ -38,10 +38,12 @@ if __name__ == '__main__':
     red_vid_data_buffer = []
     green_vid_data_buffer = []
     blue_vid_data_buffer = []
-    buffer_size = 128
 
-    filename = 'assets\\output_2.mp4'
+
+    filename = 'assets\\ROI_00128.mp4'
     vid_data, fps = load_video(filename)
+    buffer_size = vid_data.shape[0]
+
 
     width, height = get_frame_dimensions(vid_data[0])
 
@@ -66,7 +68,7 @@ if __name__ == '__main__':
             L = buffer_size
 
         # When buffer is filled start calculations
-        if L > 127:
+        if L > buffer_size-1:
             # Normalization
             normalized_roi_red_values = normalization(red_vid_data_buffer)
             normalized_roi_green_values = normalization(green_vid_data_buffer)
@@ -76,7 +78,7 @@ if __name__ == '__main__':
             # bandpassed_green = temporal_bandpass_filter(normalized_roi_green_values, 30)
             # bandpassed_blue = temporal_bandpass_filter(normalized_roi_blue_values, 30)
 
-            # Chrominance Signal x & y
+            # Chrominance Signal X & Y
             x = 3 * normalized_roi_red_values - 2 * normalized_roi_green_values
             y = 1.5 * normalized_roi_red_values + normalized_roi_green_values - 1.5 * normalized_roi_blue_values
 
