@@ -39,8 +39,8 @@ if __name__ == '__main__':
     green_vid_data_buffer = []
     blue_vid_data_buffer = []
 
-
-    filename = 'assets\\ROI_00128.mp4'
+    filename = 'assets\\ROIs\\ROI_00101.mp4'
+    # filename = 'assets\\00113.mp4'
     vid_data, fps = load_video(filename)
     buffer_size = vid_data.shape[0]
 
@@ -92,6 +92,9 @@ if __name__ == '__main__':
             # pulse signal S
             s = x - alpha * y
 
+            # s = s - s.mean()
+            # r = np.correlate(s, s, mode='full')[-buffer_size:]
+
             # s = temporal_bandpass_filter(s, 30)
             # s2 = 3 * (1 - alpha / 2) * bandpassed_red - 2 * (1 + alpha / 2) * bandpassed_green + 3 * alpha / 2 * bandpassed_blue
 
@@ -99,7 +102,7 @@ if __name__ == '__main__':
             plt.xlabel("Frames")
             plt.ylabel("Pixel Average")
             plt.plot(s)
-            plt.title('mean_values Image')
+            plt.title('Signal Values Image')
             plt.xticks([])
             plt.yticks([])
 
