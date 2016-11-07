@@ -15,7 +15,7 @@ def load_video(video_filename):
     print("Frame Count: %i" % frame_count)
     width, height = get_capture_dimensions(capture)
     fps = int(capture.get(cv2.CAP_PROP_FPS))
-    x = 0
+    x = 1
     vid_frames = np.zeros((frame_count, height, width, 3), dtype='uint8')
 
     while capture.isOpened():
@@ -25,6 +25,8 @@ def load_video(video_filename):
         resized_frame = cv2.resize(frame, (width, height))
         vid_frames[x] = resized_frame
         x += 1
+        if x >= frame_count:
+            break
 
     # Release everything if job is finished
     capture.release()

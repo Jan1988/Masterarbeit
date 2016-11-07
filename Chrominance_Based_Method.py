@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 import time
 import cv2
 import scipy
+import os
 
 from Video_Tools import load_video
 from Video_Tools import temporal_bandpass_filter
@@ -39,14 +40,13 @@ if __name__ == '__main__':
     green_vid_data_buffer = []
     blue_vid_data_buffer = []
 
-
-    filename = 'assets\\ROI_00128.mp4'
+    filename = os.path.join('assets', 'output_1.mp4')
+    # filename = '/assets/output_2.mp4'
+    print(filename)
     vid_data, fps = load_video(filename)
     buffer_size = vid_data.shape[0]
 
-
     width, height = get_frame_dimensions(vid_data[0])
-
 
     i = 0
     for frame in vid_data:
