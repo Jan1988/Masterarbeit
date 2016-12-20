@@ -4,6 +4,8 @@ import os
 import scipy.fftpack
 
 
+
+
 def load_video(video_filename):
     """Load a video into a numpy array"""
     print("Loading " + video_filename)
@@ -42,8 +44,14 @@ def get_capture_dimensions(capture):
     return width, height
 
 
+def get_frames_dimension(frame):
+    """Get the dimensions of a all frames"""
+    length, height, width = frame.shape[:3]
+    return length, width, height
+
+
 def get_frame_dimensions(frame):
-    """Get the dimensions of a single frame"""
+    """Get the dimensions of a frame"""
     height, width = frame.shape[:2]
     return width, height
 
@@ -60,6 +68,14 @@ def split_into_rgb_channels(image):
     blue = image[:, :, 0]
     return red, green, blue
 
+
+def split_vid_into_rgb_channels(vid_frames):
+
+    red = vid_frames[:, :, :, 2]
+    green = vid_frames[:, :, :, 1]
+    blue = vid_frames[:, :, :, 0]
+
+    return red, green, blue
 
 def load_video_float(video_filename):
     vid_data, fps = load_video(video_filename)

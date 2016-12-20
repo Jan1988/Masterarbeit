@@ -3,7 +3,6 @@ from matplotlib import pyplot as plt
 import time
 import cv2
 import scipy
-import os
 
 from Video_Tools import load_video
 from Video_Tools import temporal_bandpass_filter
@@ -36,132 +35,119 @@ if __name__ == '__main__':
     start_time = time.time()
 
     # Color Channel Buffers
-    red_vid_data_buffer = []
-    green_vid_data_buffer = []
-    blue_vid_data_buffer = []
+    red_vid_data_array = []
+    green_vid_data_array = []
+    blue_vid_data_array = []
 
-    filename = os.path.join('assets', 'output_1.mp4')
-    # filename = '/assets/output_2.mp4'
-    print(filename)
+    filename = 'assets\\ROIs\\ROI_00101.mp4'
+    # filename = 'assets\\00113.mp4'
     vid_data, fps = load_video(filename)
-    buffer_size = vid_data.shape[0]
+    L = vid_data.shape[0]
+    print('Frames: ' + str(L))
 
     width, height = get_frame_dimensions(vid_data[0])
 
-    i = 0
+
     for frame in vid_data:
 
         red_frame, green_frame, blue_frame = split_into_rgb_channels(frame)
 
         # Mean for every colour channel over their pixel values
-        red_vid_data_buffer.append(np.mean(red_frame))
-        green_vid_data_buffer.append(np.mean(green_frame))
-        blue_vid_data_buffer.append(np.mean(blue_frame))
+        red_vid_data_array.append(np.mean(red_frame))
+        green_vid_data_array.append(np.mean(green_frame))
+        blue_vid_data_array.append(np.mean(blue_frame))
 
-        L = len(red_vid_data_buffer)
 
-        # Throw out first value of buffer to ensure correct length
-        if L > buffer_size:
-            red_vid_data_buffer.pop(0)
-            green_vid_data_buffer.pop(0)
-            blue_vid_data_buffer.pop(0)
-            L = buffer_size
+    # Normalization
+    normalized_roi_red_values = normalization(red_vid_data_array)
+    normalized_roi_green_values = normalization(green_vid_data_array)
+    normalized_roi_blue_values = normalization(blue_vid_data_array)
 
-        # When buffer is filled start calculations
-        if L > buffer_size-1:
-            # Normalization
-            normalized_roi_red_values = normalization(red_vid_data_buffer)
-            normalized_roi_green_values = normalization(green_vid_data_buffer)
-            normalized_roi_blue_values = normalization(blue_vid_data_buffer)
+    # bandpassed_red = temporal_bandpass_filter(normalized_roi_red_values, 30)
+    # bandpassed_green = temporal_bandpass_filter(normalized_roi_green_values, 30)
+    # bandpassed_blue = temporal_bandpass_filter(normalized_roi_blue_values, 30)
 
-            # bandpassed_red = temporal_bandpass_filter(normalized_roi_red_values, 30)
-            # bandpassed_green = temporal_bandpass_filter(normalized_roi_green_values, 30)
-            # bandpassed_blue = temporal_bandpass_filter(normalized_roi_blue_values, 30)
+    # Chrominance Signal X & Y
+    x = 3 * normalized_roi_red_values - 2 * normalized_roi_green_values
+    y = 1.5 * normalized_roi_red_values + normalized_roi_green_values - 1.5 * normalized_roi_blue_values
 
-            # Chrominance Signal X & Y
-            x = 3 * normalized_roi_red_values - 2 * normalized_roi_green_values
-            y = 1.5 * normalized_roi_red_values + normalized_roi_green_values - 1.5 * normalized_roi_blue_values
+    # Standard deviation of x & y
+    std_dev_x = np.std(x)
+    std_dev_y = np.std(y)
 
-            # Standard deviation of x & y
-            std_dev_x = np.std(x)
-            std_dev_y = np.std(y)
+    # alpha
+    alpha = std_dev_x / std_dev_y
 
-            # alpha
-            alpha = std_dev_x / std_dev_y
+    # pulse signal S
+    s = x - alpha * y
 
-            # pulse signal S
-            s = x - alpha * y
+    # s = s - s.mean()
+    # r = np.correlate(s, s, mode='full')[-buffer_size:]
 
-            # s = temporal_bandpass_filter(s, 30)
-            # s2 = 3 * (1 - alpha / 2) * bandpassed_red - 2 * (1 + alpha / 2) * bandpassed_green + 3 * alpha / 2 * bandpassed_blue
+    # s = temporal_bandpass_filter(s, 30)
+    # s2 = 3 * (1 - alpha / 2) * bandpassed_red - 2 * (1 + alpha / 2) * bandpassed_green + 3 * alpha / 2 * bandpassed_blue
 
-            plt.subplot(223)
-            plt.xlabel("Frames")
-            plt.ylabel("Pixel Average")
-            plt.plot(s)
-            plt.title('mean_values Image')
-            plt.xticks([])
-            plt.yticks([])
+    plt.subplot(223)
+    plt.xlabel("Frames")
+    plt.ylabel("Pixel Average")
+    plt.plot(s)
+    plt.title('Signal Values Image')
+    plt.xticks([])
+    plt.yticks([])
 
-            hanning_window = np.hanning(L)
+    hanning_window = np.hanning(L)
 
-            s = hanning_window * s
+    s = hanning_window * s
 
-            raw = np.fft.rfft(s, 512)
+    raw = np.fft.rfft(s, 512)
 
-            fft1 = np.abs(raw)
+    fft1 = np.abs(raw)
 
-            arranged = np.arange(L / 2 + 1)
+    arranged = np.arange(L / 2 + 1)
 
-            freqs = fps / L * arranged
+    freqs = fps / L * arranged
 
-            freqs_new = 60. * freqs
+    freqs_new = 60. * freqs
 
-            idx = np.where((freqs_new > 50) & (freqs_new < 210))
+    idx = np.where((freqs_new > 50) & (freqs_new < 210))
 
-            pruned = fft1[idx]
-            freqs_pruned = freqs_new[idx]
-            idx2 = np.argmax(pruned)
-            bpm = freqs_pruned[idx2]
-            print(bpm)
+    pruned = fft1[idx]
+    freqs_pruned = freqs_new[idx]
+    idx2 = np.argmax(pruned)
+    bpm = freqs_pruned[idx2]
+    print(bpm)
 
-            # Display images
-            plt.subplot(221)
-            plt.imshow(frame)
-            plt.title('frame')
-            plt.xticks([])
-            plt.yticks([])
+    # Display images
+    plt.subplot(221)
+    plt.imshow(frame)
+    plt.title('frame')
+    plt.xticks([])
+    plt.yticks([])
 
-            plt.subplot(222)
-            plt.xlabel("Frequency (Hz)")
-            plt.ylabel("Amplitude")
-            plt.plot(fft1)
-            plt.title('fft1 Image')
-            plt.xticks([])
-            plt.yticks([])
+    plt.subplot(222)
+    plt.xlabel("Frequency (Hz)")
+    plt.ylabel("Amplitude")
+    plt.plot(fft1)
+    plt.title('fft1 Image')
+    plt.xticks([])
+    plt.yticks([])
 
-            # plt.subplot(223)
-            # plt.xlabel("Frames")
-            # plt.ylabel("Pixel Average")
-            # plt.plot(s)
-            # plt.title('mean_values Image')
-            # plt.xticks([])
-            # plt.yticks([])
+    # plt.subplot(223)
+    # plt.xlabel("Frames")
+    # plt.ylabel("Pixel Average")
+    # plt.plot(s)
+    # plt.title('mean_values Image')
+    # plt.xticks([])
+    # plt.yticks([])
 
-            plt.subplot(224)
-            plt.xlabel("Frames")
-            plt.ylabel("Pixel Average")
-            plt.plot(pruned)
-            plt.title('pruned')
-            plt.xticks([])
-            plt.yticks([])
+    plt.subplot(224)
+    plt.xlabel("Frames")
+    plt.ylabel("Pixel Average")
+    plt.plot(pruned)
+    plt.title('pruned')
+    plt.xticks([])
+    plt.yticks([])
 
-            plt.show()
-
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        i += 1
-        print('Frame: ' + str(i))
-
+    plt.show()
 
     print("--- %s seconds ---" % (time.time() - start_time))
