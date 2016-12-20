@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 import time
 import cv2
 import scipy
+import os
 
 from Video_Tools import load_video
 from Video_Tools import temporal_bandpass_filter
@@ -58,9 +59,9 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
 if __name__ == '__main__':
     start_time = time.time()
 
-    # filename = 'assets\\ROIs\\ROI_00101.mp4'
-    filename = 'assets\\00102.mp4'
-    vid_data, fps = load_video(filename)
+    file_path = os.path.join('assets', '00101.mp4')
+    # file_path = os.path.join('assets', 'ROIs', '00101.mp4')
+    vid_data, fps = load_video(file_path)
 
     L, width, height = get_frames_dimension(vid_data)
     print('Frames: ' + str(L))
@@ -87,14 +88,6 @@ if __name__ == '__main__':
 
     # plt.matshow(roi_means_2DArray[:, :, 0], cmap=plt.cm.gray)
     # plt.show()
-
-    # Plot schreiben der die Means anzeigt
-    # means_2DArray von allen frames aneinander hängen
-
-    # TODO: Signale über alle 64 Means berechnen
-    # TODO: Ebenfalls plotten
-
-    # print(roi_mean_frames[:, 0, 0, :])
 
     red_vid_frames, green_vid_frames, blue_vid_frames = split_vid_into_rgb_channels(roi_mean_frames)
 
@@ -145,13 +138,12 @@ if __name__ == '__main__':
             idx2 = np.argmax(pruned)
             bpm = freqs_pruned[idx2]
 
-            print(bpm)
-
             bpm_values[y, x] = bpm
 
     plt.matshow(bpm_values, cmap=plt.cm.gray)
     plt.show()
-    print(np.mean(bpm_values))
+    print('average bpm: ' + str(np.mean(bpm_values)))
+
 
     # plt.subplot(223)
     # plt.xlabel("Frames")

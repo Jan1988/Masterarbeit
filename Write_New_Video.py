@@ -47,8 +47,8 @@ def devide_image_into_rois(image, div_width, div_height):
 # top left point of roi is (x, y)
 def get_roi_frame(frame, y, x, roi_height, roi_width):
 
-    cv2.rectangle(frame, (x, y), (x + roi_width, y + roi_height), (0, 0, 0), 1)
-    roi = frame[y:y + roi_height, x:x + roi_width]
+    roi = frame[y:y + roi_height, x:x + roi_width].copy()
+    cv2.rectangle(frame, (x, y), (x + roi_width, y + roi_height), (0, 255, 0), 1)
 
     return roi, frame
 
@@ -56,24 +56,26 @@ def get_roi_frame(frame, y, x, roi_height, roi_width):
 if __name__ == '__main__':
 
     filename = '00101.mp4'
+    out_filename = 'new_00101.mp4'
 
-    path = os.path.join('assets', 'Videos (original)', filename)
-    path = "assets\\ROIs\\Original\\" + filename
-    print(path)
+    input_path = os.path.join('assets', 'ROIs', filename)
+    output_path = os.path.join('assets', 'ROIs', out_filename)
+    # path = "assets\\ROIs\\Original\\" + filename
 
-    vid_frames, fps = load_video(path)
-    fourcc = cv2.VideoWriter_fourcc(*'FMP4')
-    out = cv2.VideoWriter('assets\\ROIs\\ROI_' + filename, fourcc, 30.0, (160, 90))
+    vid_frames, fps = load_video(input_path)
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(output_path, fourcc, 30.0, (640, 360))
 
     # zum Verkürzen des Videos
-    # cutted_frames = vid_frames[0:(vid_frames.shape[0]/2)]
+    # [x:] = remove from beginning
+    # cutted_frames = vid_frames[234:]
 
     for frame in vid_frames:
-        roi, frame_with_rect = get_roi_frame(frame, 170, 520, 90, 160)
+        roi, frame_with_rect = get_roi_frame(frame, 60, 0, 360, 640)
 
         # Show results
-        cv2.imshow('Frames', frame_with_rect)
-        cv2.imshow('ROI', roi)
+        # cv2.imshow('Frames', frame_with_rect)
+        # cv2.imshow('ROI', roi)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -83,3 +85,4 @@ if __name__ == '__main__':
 
     out.release()
     cv2.destroyAllWindows()
+    print('Video written to ' + output_path)
