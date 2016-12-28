@@ -4,8 +4,6 @@ import os
 import scipy.fftpack
 
 
-
-
 def load_video(video_filename):
     """Load a video into a numpy array"""
     print("Loading " + video_filename)
@@ -17,7 +15,10 @@ def load_video(video_filename):
     print("Frame Count: %i" % frame_count)
     width, height = get_capture_dimensions(capture)
     fps = int(capture.get(cv2.CAP_PROP_FPS))
-    x = 0
+
+    # codec = str(capture.get(cv2.CAP_PROP_FOURCC))
+    # print('codec: ' + codec)
+    x = 1
     vid_frames = np.zeros((frame_count, height, width, 3), dtype='uint8')
 
     while capture.isOpened():
@@ -27,6 +28,8 @@ def load_video(video_filename):
         resized_frame = cv2.resize(frame, (width, height))
         vid_frames[x] = resized_frame
         x += 1
+        if x >= frame_count:
+            break
 
     # Release everything if job is finished
     capture.release()
@@ -42,8 +45,8 @@ def get_capture_dimensions(capture):
     return width, height
 
 
-def get_frames_dimension(frame):
-    """Get the dimensions of a all frames"""
+def get_video_dimensions(frame):
+    """Get the dimensions of a video"""
     length, height, width = frame.shape[:3]
     return length, width, height
 
@@ -54,26 +57,28 @@ def get_frame_dimensions(frame):
     return width, height
 
 
-def split_into_rgb_channels(image):
+def split_frame_into_rgb_channels(image):
+
+    red = image[:, :, 2]
+    green = image[:, :, 1]
+    blue = image[:, :, 0]
+
+    return red, green, blue
+
+
+def split_vid_into_rgb_channels(vid_frames):
     '''Split the target video stream into its red, green and blue channels.
     image - a numpy array of shape (rows, columns, 3).
     output - three numpy arrays of shape (rows, columns) and dtype same as
              image, containing the corresponding channels.
     '''
 
-    red = image[:, :, 2]
-    green = image[:, :, 1]
-    blue = image[:, :, 0]
-    return red, green, blue
-
-
-def split_vid_into_rgb_channels(vid_frames):
-
     red = vid_frames[:, :, :, 2]
     green = vid_frames[:, :, :, 1]
     blue = vid_frames[:, :, :, 0]
 
     return red, green, blue
+
 
 def load_video_float(video_filename):
     vid_data, fps = load_video(video_filename)
