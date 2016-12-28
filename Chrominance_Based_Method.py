@@ -39,8 +39,8 @@ if __name__ == '__main__':
     green_vid_data_array = []
     blue_vid_data_array = []
 
-    filename = 'assets\\ROIs\\ROI_00101.mp4'
-    # filename = 'assets\\00113.mp4'
+    # filename = 'assets\\ROIs\\ROI_00101.mp4'
+    filename = 'assets\\00100.mts'
     vid_data, fps = load_video(filename)
     L = vid_data.shape[0]
     print('Frames: ' + str(L))
