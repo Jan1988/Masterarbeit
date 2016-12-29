@@ -2,25 +2,27 @@ import numpy as np
 from matplotlib import pyplot as plt
 import time
 import scipy
+import os
 
 from Video_Tools import load_video
 from Video_Tools import load_video_float
 
 start_time = time.time()
 
-filename = 'assets\\output_1.mp4'
-vid_data, fps = load_video_float(filename)
+file_path = os.path.join('assets', 'ROIs', 'new_00101.mp4')
+vid_data, fps = load_video_float(file_path)
 """Graph the average value of the video as well as the frequency strength"""
 averages = []
 bounds = None
 
+cutted_frames = vid_data[2:]
 
 if bounds:
-    for x in range(1, vid_data.shape[0] - 1):
-        averages.append(vid_data[x, bounds[2]:bounds[3], bounds[0]:bounds[1], :].sum())
+    for x in range(1, cutted_frames.shape[0] - 1):
+        averages.append(cutted_frames[x, bounds[2]:bounds[3], bounds[0]:bounds[1], :].sum())
 else:
-    for x in range(1, vid_data.shape[0] - 1):
-        averages.append(vid_data[x, :, :, :].sum())
+    for x in range(1, cutted_frames.shape[0] - 1):
+        averages.append(cutted_frames[x, :, :, :].sum())
 
 averages = averages - min(averages)
 
