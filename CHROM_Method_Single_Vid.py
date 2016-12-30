@@ -17,11 +17,54 @@ def normalization(colour_channel_values):
     return normalized_values
 
 
+# Calculate Pulse Signal and BPM value for every ROI
+def chrom_based_pulse_signal_estimation(fps, red_temp_array, green_temp_array, blue_temp_array):
+
+    normalized_red_temp_array = normalization(red_temp_array)
+    normalized_green_temp_array = normalization(green_temp_array)
+    normalized_blue_temp_array = normalization(blue_temp_array)
+
+    # Chrominance Signal X & Y
+    chrom_x = 3 * normalized_red_temp_array - 2 * normalized_green_temp_array
+    chrom_y = 1.5 * normalized_red_temp_array + normalized_green_temp_array - 1.5 * normalized_blue_temp_array
+
+    # Standard deviation of x & y
+    std_dev_x = np.std(chrom_x)
+    std_dev_y = np.std(chrom_y)
+
+    # alpha
+    alpha = std_dev_x / std_dev_y
+
+    # pulse signal S
+    S = chrom_x - alpha * chrom_y
+
+    hanning_window = np.hanning(len(S))
+    hann_window_signal = hanning_window * S
+
+    # Fourier Transform
+    raw = np.fft.fft(hann_window_signal, 512)
+    L = int(len(raw) / 2 + 1)
+    fft1 = np.abs(raw[:L])
+
+    frequencies = np.linspace(0, fps / 2, L, endpoint=True)
+    heart_rates = frequencies * 60
+
+    # bandpass filter for pulse
+    bound_low = (np.abs(heart_rates - 55)).argmin()
+    bound_high = (np.abs(heart_rates - 180)).argmin()
+    fft1[:bound_low] = 0
+    fft1[bound_high:] = 0
+
+    max_freq_pos = np.argmax(fft1)
+
+    roi_bpm = heart_rates[max_freq_pos]
+
+    return roi_bpm, heart_rates, fft1, hann_window_signal, S
+
+
 if __name__ == '__main__':
     start_time = time.time()
 
-    actual_dir_path = os.path.dirname(os.path.realpath(__file__))
-    print(actual_dir_path)
     dir_path = os.path.join('assets', 'Vid_Original')
     file = '00101.MTS'
     file_path = os.path.join(dir_path, file)
@@ -31,7 +74,7 @@ if __name__ == '__main__':
 
     print(file_path)
     vid_data, fps = load_video(file_path)
-    vid_data = vid_data[:250]
+    vid_data = vid_data[1:250]
 
     frame_count, width, height = get_video_dimensions(vid_data)
     print('Cutted length: ' + str(frame_count))
@@ -62,55 +105,13 @@ if __name__ == '__main__':
     #
     #
 
-    '''Calculate Pulse Signal and BPM value for every ROI '''
-    for x in range(0, roi_mean_frames.shape[1]):
-        for y in range(0, roi_mean_frames.shape[2]):
+    '''BPM Estimation for every ROI'''
+    for x in range(0, w_div):
+        for y in range(0, h_div):
+            bpm, heart_rates, fft, hann_S, S = chrom_based_pulse_signal_estimation(fps, red_vid_frames[:, x, y], green_vid_frames[:, x, y], blue_vid_frames[:, x, y])
 
-            red_temp_array = red_vid_frames[:, x, y]
-            green_temp_array = green_vid_frames[:, x, y]
-            blue_temp_array = blue_vid_frames[:, x, y]
-
-            normalized_red_temp_array = normalization(red_temp_array)
-            normalized_green_temp_array = normalization(green_temp_array)
-            normalized_blue_temp_array = normalization(blue_temp_array)
-
-            # Chrominance Signal X & Y
-            chrom_x = 3 * normalized_red_temp_array - 2 * normalized_green_temp_array
-            chrom_y = 1.5 * normalized_red_temp_array + normalized_green_temp_array - 1.5 * normalized_blue_temp_array
-
-            # Standard deviation of x & y
-            std_dev_x = np.std(chrom_x)
-            std_dev_y = np.std(chrom_y)
-
-            # alpha
-            alpha = std_dev_x / std_dev_y
-
-            # pulse signal S
-            s = chrom_x - alpha * chrom_y
-
-            hanning_window = np.hanning(frame_count)
-            hann_window_signal = hanning_window * s
-
-            # Fourier Transform
-            raw = np.fft.fft(hann_window_signal, 512)
-            L = int(len(raw) / 2 + 1)
-            fft1 = np.abs(raw[:L])
-
-            frequencies = np.linspace(0, fps / 2, L, endpoint=True)
-            heart_rates = frequencies * 60
-
-            # bandpass filter for pulse
-            bound_low = (np.abs(heart_rates - 55)).argmin()
-            bound_high = (np.abs(heart_rates - 180)).argmin()
-            fft1[:bound_low] = 0
-            fft1[bound_high:] = 0
-
-            max_freq_pos = np.argmax(fft1)
-
-            bpm = heart_rates[max_freq_pos]
             bpm_values[y, x] = bpm
             sub2.text(x, y, round(bpm, 1), color=(0.745, 0.467, 0.294), fontsize=8, va='center', ha='center')
-            # sub1.text(w_steps * x + w_steps / 2, h_steps * y + h_steps / 2, round(bpm, 1), fontsize=8)
 
     print(bpm_values)
 

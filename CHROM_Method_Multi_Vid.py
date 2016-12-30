@@ -10,6 +10,8 @@ from Video_Tools import split_vid_into_rgb_channels
 from Video_Tools import get_video_dimensions
 from Video_Tools import devide_frame_into_roi_means
 
+from CHROM_Method_Single_Vid import chrom_based_pulse_signal_estimation
+
 
 def normalization(colour_channel_values):
     mean = np.mean(colour_channel_values)
@@ -30,21 +32,26 @@ if __name__ == '__main__':
         if file.endswith(".MTS"):
             file_path = os.path.join(dir_path, file)
             print(file_path)
-            vid_data, fps = load_video(file_path)
+            video_frames, fps = load_video(file_path)
 
-            vid_data = vid_data[:250]
+            video_frames = video_frames[1:250]
 
-            frame_count, width, height = get_video_dimensions(vid_data)
+            frame_count, width, height = get_video_dimensions(video_frames)
             print('Cutted length: ' + str(frame_count))
             # w_steps = width/w_div
             # h_steps = height/h_div
             roi_mean_frames = np.zeros((frame_count, w_div, h_div, 3), dtype='float64')
 
-            for j, frame in enumerate(vid_data):
+            for j, frame in enumerate(video_frames):
 
-                # Spatial Averaging
-                blurred_frame = cv2.GaussianBlur(frame, (5, 5), 1)
-                roi_means_2DArray, frame_devided = devide_frame_into_roi_means(blurred_frame, w_div, h_div)
+                '''Spatial Averaging
+                The video frame is split into w_div * h_div ROIs
+                For every ROI the mean of all ROI pixels is calculated
+                Return is an 2D Array with the mean values of every ROI and
+                the original image with rectangles displaying each ROI
+                '''
+                # blurred_frame = cv2.GaussianBlur(frame, (5, 5), 1)
+                roi_means_2DArray, frame_devided = devide_frame_into_roi_means(frame, w_div, h_div)
 
                 # Create time series array of the roi means
                 roi_mean_frames[j] = roi_means_2DArray
@@ -57,55 +64,14 @@ if __name__ == '__main__':
             sub1 = fig.add_subplot(121)
             sub2 = fig.add_subplot(122)
 
-            # Normalization
-            for x in range(0, roi_mean_frames.shape[1]):
-                for y in range(0, roi_mean_frames.shape[2]):
+            '''BPM Estimation for every ROI'''
+            for x in range(0, w_div):
+                for y in range(0, h_div):
 
-                    red_temp_array = red_vid_frames[:, x, y]
-                    green_temp_array = green_vid_frames[:, x, y]
-                    blue_temp_array = blue_vid_frames[:, x, y]
+                    bpm, heart_rates, fft, hann_S, S = chrom_based_pulse_signal_estimation(fps, red_vid_frames[:, x, y], green_vid_frames[:, x, y], blue_vid_frames[:, x, y])
 
-                    normalized_red_temp_array = normalization(red_temp_array)
-                    normalized_green_temp_array = normalization(green_temp_array)
-                    normalized_blue_temp_array = normalization(blue_temp_array)
-
-                    # Chrominance Signal X & Y
-                    chrom_x = 3 * normalized_red_temp_array - 2 * normalized_green_temp_array
-                    chrom_y = 1.5 * normalized_red_temp_array + normalized_green_temp_array - 1.5 * normalized_blue_temp_array
-
-                    # Standard deviation of x & y
-                    std_dev_x = np.std(chrom_x)
-                    std_dev_y = np.std(chrom_y)
-
-                    # alpha
-                    alpha = std_dev_x / std_dev_y
-
-                    # pulse signal S
-                    s = chrom_x - alpha * chrom_y
-
-                    hanning_window = np.hanning(frame_count)
-                    hann_window_signal = hanning_window * s
-
-                    # Fourier Transform
-                    raw = np.fft.fft(hann_window_signal, 512)
-                    L = int(len(raw) / 2 + 1)
-                    fft1 = np.abs(raw[:L])
-
-                    frequencies = np.linspace(0, fps / 2, L, endpoint=True)
-                    heart_rates = frequencies * 60
-
-                    # bandpass filter for pulse
-                    bound_low = (np.abs(heart_rates - 55)).argmin()
-                    bound_high = (np.abs(heart_rates - 180)).argmin()
-                    fft1[:bound_low] = 0
-                    fft1[bound_high:] = 0
-
-                    max_freq_pos = np.argmax(fft1)
-
-                    bpm = heart_rates[max_freq_pos]
                     bpm_values[y, x] = bpm
                     sub2.text(x, y, round(bpm, 1), color=(0.745, 0.467, 0.294), fontsize=8, va='center', ha='center')
-                    # sub1.text(w_steps * x + w_steps / 2, h_steps * y + h_steps / 2, round(bpm, 1), fontsize=8)
 
             print(bpm_values)
 
@@ -114,7 +80,6 @@ if __name__ == '__main__':
 
             sub2.set_title('BPM Matrix')
             sub2.matshow(bpm_values, cmap=plt.cm.gray)
-
 
             # plt.matshow(bpm_values, cmap=plt.cm.gray)
             plt.tight_layout()

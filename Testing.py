@@ -7,18 +7,27 @@ from Video_Tools import load_video
 from matplotlib import pyplot as plt
 
 
-
-file_path = os.path.join('assets', 'ROIs', 'new_00100.mp4')
+dir_path = os.path.join('assets', 'Vid_Original')
+file = '00100.MTS'
+file_path = os.path.join(dir_path, file)
 
 video_frames, fps = load_video(file_path)
+video_frames = video_frames[1:100]
 
+buffer_size = 32
+buffer_size_half = int(buffer_size/2)
+frame_buffer = []
+
+j = 0
 for frame in video_frames:
 
-    # Spatial Averaging
-    roi_means_2DArray, frame_devided = devide_frame_into_roi_means(frame, 8, 4)
+    buffer_count = len(frame_buffer)
 
-    cv2.imshow('frame_devided', frame_devided)
+    if buffer_count >= buffer_size:
+        frame_buffer = frame_buffer[-buffer_size_half:]
 
-print(roi_means_2DArray)
-plt.imshow(frame_devided)
-plt.show()
+    frame_buffer.append(j)
+    print(frame_buffer)
+    j += 1
+
+
