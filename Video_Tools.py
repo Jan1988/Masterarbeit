@@ -107,25 +107,25 @@ def temporal_bandpass_filter(data, fps, freq_min=0.75, freq_max=5.0, axis=0, amp
     return result
 
 
-def devide_image_into_roi_means(image, div_width, div_height):
+def devide_frame_into_roi_means(frame, div_width, div_height):
 
-    width, height = get_frame_dimensions(image)
-    roi_width = int(width / div_width)
-    roi_height = int(height / div_height)
+    width, height = get_frame_dimensions(frame)
+    width_steps = int(width / div_width)
+    height_steps = int(height / div_height)
 
-    roi_means_2darray = np.zeros((div_height, div_width, 3), dtype='float64')
+    roi_means_2darray = np.zeros((div_width, div_height, 3), dtype='float64')
+    frame_clone = frame.copy()
 
-    # Ungeradere Rest wird abgeschnitten
-    width = roi_width * div_width
-    height = roi_height * div_height
-    for x in range(0, width, roi_width):
-        for y in range(0, height, roi_height):
+    # Hier wird der ungeradere Rest abgeschnitten
+    width = width_steps * div_width
+    height = height_steps * div_height
+    for x in range(0, width, width_steps):
+        for y in range(0, height, height_steps):
 
-            cv2.rectangle(image, (x, y), (x + roi_width, y + roi_height), (0, 0, 0), 1)
-            roi = image[y:y + roi_height, x:x + roi_width]
+            roi = frame[y:y + height_steps, x:x + width_steps]
+            cv2.rectangle(frame_clone, (x, y), (x + width_steps, y + height_steps), (0, 0, 0), 2)
 
             #2D array wird mit den Means der ROIs gefüllt
-            roi_means_2darray[(x/roi_width), (y/roi_height)] = np.mean(roi, axis=(0, 1))
+            roi_means_2darray[int(x / width_steps), int(y / height_steps)] = np.mean(roi, axis=(0, 1))
 
-    return roi_means_2darray, image
-
+    return roi_means_2darray, frame_clone
