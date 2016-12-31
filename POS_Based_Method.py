@@ -38,6 +38,9 @@ if __name__ == '__main__':
     cutted_frames = video_frames[2:]
     frame_count, width, height = get_video_dimensions(cutted_frames)
 
+    '''In Paper: H is a numpy array with size of frame count but
+    if we leave the first signals because of the m buffer, m signals are missing
+    '''
     H = np.zeros((1, frame_count), dtype='float64')
 
     h = np.zeros((1, frame_count), dtype='float64')
@@ -62,10 +65,11 @@ if __name__ == '__main__':
             green_norm = normalize(green_list)
             blue_norm = normalize(blue_list)
 
-            # 6 Projection
+            # 6 projection
             S1 = 0 * red_norm + 1 * green_norm - 1 * blue_norm
             S2 = -2 * red_norm + 1 * green_norm + 1 * blue_norm
 
+            # 7 tuning
             S1_std = np.std(S1)
             S2_std = np.std(S2)
 
@@ -74,9 +78,10 @@ if __name__ == '__main__':
             h = S1 + alpha * S2
 
             #make h zero-mean
-
             h_mean = np.mean(h)
             h_no_mean = h - h_mean
+
+            H = H + h_no_mean
 
         n += 1
 
@@ -109,9 +114,11 @@ if __name__ == '__main__':
     sub4.set_title('h-zero-mean')
     sub4.plot(int_frames, h_no_mean, 'k')
 
-    # Fourier Transform
-    hann_window_signal = np.hanning(frame_count) * h_no_mean
+    sub5 = fig.add_subplot(335)
+    sub5.set_title('H-Signal')
+    sub5.plot(H, 'k')
 
+    # Fourier Transform
     raw = np.fft.fft(hann_window_signal, 512)
     L = int(len(raw) / 2 + 1)
     fft1 = np.abs(raw[:L])
@@ -141,15 +148,15 @@ if __name__ == '__main__':
     # freqs2 = freqs2[len(freqs2) / 2 + 1:] * 60.0
     # fft2 = fft2[len(fft2) / 2 + 1:]
 
-    sub5 = fig.add_subplot(335)
-    sub5.set_title('Hanning Window')
-    sub5.plot(hann_window_signal, 'k')
+    sub8 = fig.add_subplot(336)
+    sub8.set_title('Hanning Window')
+    sub8.plot(hann_window_signal, 'k')
 
-    sub6 = fig.add_subplot(336)
+    sub6 = fig.add_subplot(337)
     sub6.set_title('FFT Raw')
     sub6.plot(raw, 'k')
 
-    sub7 = fig.add_subplot(337)
+    sub7 = fig.add_subplot(338)
     sub7.set_title('FFT abs')
     sub7.plot(heart_rates, fft1, 'k')
 

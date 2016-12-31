@@ -17,6 +17,22 @@ def normalization(colour_channel_values):
     return normalized_values
 
 
+# def overlap_add(input_signal, window_size=32, window_count=8):
+#
+#     L = len(input_signal)
+#     overlap_signal = np.zeros((L), dtype='float64')
+#
+#     offsets = np.linspace(0, L - window_size, window_count)
+#
+#     hanning_window = np.hanning(window_size)
+#
+#     for n in offsets:
+#         int_n = int(n)
+#         hann_window_signal = hanning_window * input_signal[int_n:int_n + window_size]
+#         overlap_signal[int_n/2:int_n/2 + window_size] += hann_window_signal
+#
+#     return overlap_signal
+
 # Calculate Pulse Signal and BPM value for every ROI
 def chrom_based_pulse_signal_estimation(fps, red_temp_array, green_temp_array, blue_temp_array):
 
@@ -38,8 +54,9 @@ def chrom_based_pulse_signal_estimation(fps, red_temp_array, green_temp_array, b
     # pulse signal S
     S = chrom_x - alpha * chrom_y
 
-    hanning_window = np.hanning(len(S))
-    hann_window_signal = hanning_window * S
+    # Hann window signal
+    hann_window = np.hanning(len(S))
+    hann_window_signal = hann_window * S
 
     # Fourier Transform
     raw = np.fft.fft(hann_window_signal, 512)
