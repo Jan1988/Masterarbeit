@@ -1,51 +1,30 @@
-import time
-import os
+
 import numpy as np
-import scipy
+
+from Video_Tools import split_frame_into_rgb_channels, normalize_mean_over_interval
 
 
-from matplotlib import pyplot as plt
-from Video_Tools import load_video
-from Video_Tools import get_video_dimensions
-from Video_Tools import split_frame_into_rgb_channels
-from Video_Tools import temporal_bandpass_filter
+# def overlap_add(traces, window_len, overlap):
+#     window_spacing = window_len - overlap
+#     num_windows = int((len(traces)-overlap) / window_spacing)
 
 
-# temporal deviding through mean normalization
-def normalize(list):
+def pos_based_method(video_frames, fps):
 
-    list_mean = np.mean(list)
-    normalized_list = list/ list_mean
-
-    return normalized_list
-
-
-if __name__ == '__main__':
-    start_time = time.time()
+    sequence_length = len(video_frames)
 
     # sliding window size
-    window_size = 32
+    window_size = 48
 
+    #
+    H = np.zeros(sequence_length, dtype='float64')
     # Color Channel Buffers
     red_list = []
     green_list = []
     blue_list = []
 
-    file_path = os.path.join('assets', 'ROIs', 'new_00100.mp4')
-
-    video_frames, fps = load_video(file_path)
-    print('fps: ' + str(fps))
-    cutted_frames = video_frames[2:]
-    frame_count, width, height = get_video_dimensions(cutted_frames)
-
-    '''In Paper: H is a numpy array with size of frame count but
-    if we leave the first signals because of the m buffer, m signals are missing
-    '''
-    H = np.zeros((1, frame_count), dtype='float64')
-
-    h = np.zeros((1, frame_count), dtype='float64')
     n = 1
-    for frame in cutted_frames:
+    for frame in video_frames:
 
         red_frame, green_frame, blue_frame = split_frame_into_rgb_channels(frame)
 
@@ -60,10 +39,12 @@ if __name__ == '__main__':
 
         m = n - window_size + 1
         if m > 0:
+            # print('Window from ' + str(m-1) + ' ' + str(n) + ' length ' + str(len(H[m-1:n])))
+
             # 5 temporal normalization
-            red_norm = normalize(red_list)
-            green_norm = normalize(green_list)
-            blue_norm = normalize(blue_list)
+            red_norm = normalize_mean_over_interval(red_list[m-1:n])
+            green_norm = normalize_mean_over_interval(green_list[m-1:n])
+            blue_norm = normalize_mean_over_interval(blue_list[m-1:n])
 
             # 6 projection
             S1 = 0 * red_norm + 1 * green_norm - 1 * blue_norm
@@ -81,45 +62,12 @@ if __name__ == '__main__':
             h_mean = np.mean(h)
             h_no_mean = h - h_mean
 
-            H = H + h_no_mean
+            H[m-1:n] += h_no_mean
 
         n += 1
 
-
-
-    int_frames = list(range(1, n))
-    signal_frames = list(range(1, n))
-    # 1. X-Achse 2. Y-Achse
-    # plt.axis([0, n, y_lower, y_upper])
-
-    fig = plt.figure(figsize=(17, 9))
-
-    sub1 = fig.add_subplot(331)
-    sub1.set_title('Norm. Avg.')
-    # sub1.plot(int_frames, red_norm, 'r',
-    #           int_frames, green_norm, 'g',
-    #           int_frames, blue_norm, 'b')
-    sub1.plot(int_frames, green_norm, 'g')
-
-    sub2 = fig.add_subplot(332)
-    sub2.set_title('S1 & S2 Signals')
-    sub2.plot(int_frames, S1, 'm',
-              int_frames, S2, 'c')
-
-    sub3 = fig.add_subplot(333)
-    sub3.set_title('h-Signal')
-    sub3.plot(int_frames, h, 'k')
-
-    sub4 = fig.add_subplot(334)
-    sub4.set_title('h-zero-mean')
-    sub4.plot(int_frames, h_no_mean, 'k')
-
-    sub5 = fig.add_subplot(335)
-    sub5.set_title('H-Signal')
-    sub5.plot(H, 'k')
-
     # Fourier Transform
-    raw = np.fft.fft(hann_window_signal, 512)
+    raw = np.fft.fft(H, 512)
     L = int(len(raw) / 2 + 1)
     fft1 = np.abs(raw[:L])
 
@@ -135,41 +83,8 @@ if __name__ == '__main__':
     max_freq_pos = np.argmax(fft1)
 
     bpm = heart_rates[max_freq_pos]
-    print(bpm)
 
-
-    # # FFT 2
-    # freqs2 = scipy.fftpack.fftfreq(len(h_no_mean), d=1.0 / fps)
-    # fft2 = abs(scipy.fftpack.fft(h_no_mean))
-    #
-    # idx = np.argsort(freqs2)
-    # freqs2 = freqs2[idx]
-    # fft2 = fft2[idx]
-    # freqs2 = freqs2[len(freqs2) / 2 + 1:] * 60.0
-    # fft2 = fft2[len(fft2) / 2 + 1:]
-
-    sub8 = fig.add_subplot(336)
-    sub8.set_title('Hanning Window')
-    sub8.plot(hann_window_signal, 'k')
-
-    sub6 = fig.add_subplot(337)
-    sub6.set_title('FFT Raw')
-    sub6.plot(raw, 'k')
-
-    sub7 = fig.add_subplot(338)
-    sub7.set_title('FFT abs')
-    sub7.plot(heart_rates, fft1, 'k')
-
-    # sub7 = fig.add_subplot(337)
-    # sub7.set_title('FFT fft2')
-    # sub7.plot(freqs2, fft2, 'k')
-
-    # sub8 = fig.add_subplot(338)
-    # sub8.set_title('FFT abs')
-    # sub8.plot(fft1, 'k')
-
-    plt.show()
-
+    return bpm, fft1, heart_rates, raw, H, h_no_mean, green_list
 
 
 

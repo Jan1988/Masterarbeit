@@ -1,16 +1,14 @@
+import os
+import time
+
 import numpy as np
 from matplotlib import pyplot as plt
-import time
-import cv2
-import scipy
-import os
 
+from Old_Files.CHROM_Method_Single_Vid import chrom_based_pulse_signal_estimation
+from Video_Tools import devide_frame_into_roi_means
+from Video_Tools import get_video_dimensions
 from Video_Tools import load_video
 from Video_Tools import split_vid_into_rgb_channels
-from Video_Tools import get_video_dimensions
-from Video_Tools import devide_frame_into_roi_means
-
-from CHROM_Method_Single_Vid import chrom_based_pulse_signal_estimation
 
 
 def normalization(colour_channel_values):
@@ -24,8 +22,8 @@ if __name__ == '__main__':
     start_time = time.time()
 
     dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
-    w_div = 16
-    h_div = 8
+    w_div = 32
+    h_div = 16
     bpm_values = np.zeros((h_div, w_div), dtype='float64')
 
     for file in os.listdir(dir_path):

@@ -2,10 +2,40 @@ import os
 import cv2
 import numpy as np
 
-from CHROM_Method_Single_Vid import chrom_based_pulse_signal_estimation
-from Video_Tools import devide_frame_into_roi_means, split_vid_into_rgb_channels
-from Video_Tools import load_video
 from matplotlib import pyplot as plt
+from POS_Based_Method import pos_based_method
+from Video_Tools import load_video
+
+
+def plot_results(green_norm, pulse_signal, overlap_signal, raw, fft, heart_rates):
+    # plt.axis([0, n, y_lower, y_upper])
+
+    fig = plt.figure(figsize=(17, 9))
+
+    sub1 = fig.add_subplot(331)
+    sub1.set_title('Norm. Avg.')
+    # sub1.plot(int_frames, red_norm, 'r',
+    #           int_frames, green_norm, 'g',
+    #           int_frames, blue_norm, 'b')
+    sub1.plot(green_norm, 'g')
+
+    sub2 = fig.add_subplot(332)
+    sub2.set_title('Pulse Signal')
+    sub2.plot(pulse_signal, 'k')
+
+    sub5 = fig.add_subplot(333)
+    sub5.set_title('Overlap-added Signal')
+    sub5.plot(overlap_signal, 'k')
+
+    sub8 = fig.add_subplot(334)
+    sub8.set_title('Hanning Window')
+    sub8.plot(raw, 'k')
+
+    sub7 = fig.add_subplot(335)
+    sub7.set_title('FFT abs')
+    sub7.plot(heart_rates, fft, 'k')
+
+    plt.show()
 
 
 def viola(frame):
@@ -29,56 +59,34 @@ if __name__ == '__main__':
 
     face_cascade_path = os.path.join('C:/', 'Anaconda3', 'pkgs', 'opencv3-3.1.0-py35_0', 'Library', 'etc', 'haarcascades', 'haarcascade_frontalface_default.xml')
     dir_path = os.path.join('assets', 'Vid_Original')
-    file = '00101.MTS'
+    file = '00112.MTS'
     file_path = os.path.join(dir_path, file)
 
-    window_numbers = 8
-    window_size = 32
+    window_numbers = 6
+    window_size = 40
     frame_count = window_numbers * window_size + 1
 
     video_frames, fps = load_video(file_path)
     video_frames = video_frames[1:frame_count]
-    print(len(video_frames))
+    print('Reduced Frame Count: ' + str(len(video_frames)))
 
     face_cascade = cv2.CascadeClassifier(face_cascade_path)
 
     # Create time series array of the roi means
-    means = np.zeros((len(video_frames), 3), dtype='float64')
+    viola_roi_sequence = []
 
     for j, frame in enumerate(video_frames):
 
         roi_face = viola(frame)
-        blurred_roi = cv2.blur(roi_face, (5, 5))
+        viola_roi_sequence.append(roi_face)
+        # blurred_roi = cv2.blur(roi_face, (5, 5))
 
-        means[j] = np.mean(blurred_roi, axis=(0, 1))
+        # cv2.imshow('blurred_roi', roi_face)
 
-    blue_channel = means[:, 0]
-    green_channel = means[:, 1]
-    red_channel = means[:, 2]
-
-    bpm, heart_rates, fft, hann_S, S = chrom_based_pulse_signal_estimation(fps, red_channel, green_channel, blue_channel)
+    bpm, fft, heart_rates, raw_fft, H, pulse_signal, green_avg = pos_based_method(viola_roi_sequence, fps)
+    plot_results(green_avg,  pulse_signal, H, raw_fft, fft, heart_rates)
 
     print(bpm)
 
-    fig = plt.figure(figsize=(17, 9))
-    fig.suptitle(file + ' - BPM: ' + str(bpm), fontsize=14, fontweight='bold')
-
-    sub1 = fig.add_subplot(221)
-    sub1.set_title('Norm. Avg.')
-    sub1.plot(green_channel, 'g')
-
-    sub2 = fig.add_subplot(222)
-    sub2.set_title('S Signal')
-    sub2.plot(S, 'm',)
-
-    sub3 = fig.add_subplot(223)
-    sub3.set_title('hann_S-Signal')
-    sub3.plot(hann_S, 'k')
-
-    sub4 = fig.add_subplot(224)
-    sub4.set_title('fft')
-    sub4.plot(heart_rates, fft, 'k')
-
-    plt.show()
 
 

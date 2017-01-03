@@ -83,7 +83,7 @@ if __name__ == '__main__':
     start_time = time.time()
 
     dir_path = os.path.join('assets', 'Vid_Original')
-    file = '00101.MTS'
+    file = '00100.MTS'
     file_path = os.path.join(dir_path, file)
     w_div = 16
     h_div = 8
@@ -104,8 +104,7 @@ if __name__ == '__main__':
 
         #
         # Spatial Averaging
-        blurred_frame = cv2.GaussianBlur(frame, (5, 5), 1)
-        roi_means_2DArray, frame_devided = devide_frame_into_roi_means(blurred_frame, w_div, h_div)
+        roi_means_2DArray, frame_devided = devide_frame_into_roi_means(frame, w_div, h_div)
 
         #
         # Create time series array of the roi means

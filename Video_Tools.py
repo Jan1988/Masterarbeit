@@ -129,3 +129,12 @@ def devide_frame_into_roi_means(frame, div_width, div_height):
             roi_means_2darray[int(x / width_steps), int(y / height_steps)] = np.mean(roi, axis=(0, 1))
 
     return roi_means_2darray, frame_clone
+
+
+# temporal normalization by deviding through mean
+def normalize_mean_over_interval(list):
+
+    list_mean = np.mean(list)
+    normalized_list = list / list_mean
+
+    return normalized_list
