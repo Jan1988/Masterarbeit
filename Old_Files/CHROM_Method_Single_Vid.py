@@ -82,8 +82,8 @@ def chrom_based_pulse_signal_estimation(fps, red_temp_array, green_temp_array, b
 if __name__ == '__main__':
     start_time = time.time()
 
-    dir_path = os.path.join('assets', 'Vid_Original')
-    file = '00100.MTS'
+    dir_path = os.path.join('..', 'assets', 'Vid_Original', 'Kuenstliches_Licht')
+    file = '00130.MTS'
     file_path = os.path.join(dir_path, file)
     w_div = 16
     h_div = 8
@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
     print(file_path)
     vid_data, fps = load_video(file_path)
-    vid_data = vid_data[1:250]
+    vid_data = vid_data[50:300]
 
     frame_count, width, height = get_video_dimensions(vid_data)
     print('Cutted length: ' + str(frame_count))
@@ -129,7 +129,6 @@ if __name__ == '__main__':
             bpm_values[y, x] = bpm
             sub2.text(x, y, round(bpm, 1), color=(0.745, 0.467, 0.294), fontsize=8, va='center', ha='center')
 
-    print(bpm_values)
 
     sub1.set_title('h-Signal')
     sub1.imshow(frame_devided)

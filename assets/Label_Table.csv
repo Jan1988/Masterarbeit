@@ -29,8 +29,8 @@ Video-Nr.;Finger;Video;Korrekt;Wert1;Wert2
 138;47-48;bpm;Ja;47;48
 143;55-62;bpm;Ja;55;62
 146;63-66;bpm;Ja;63;66
-149;67-86;bpm;Ja;67;86
+149;67-68;bpm;Ja;67;68
 152;60-64;bpm;Ja;60;64
-156;81-92;bpm;Nein;81;92
-160;67-69;bpm;Nein;67;69
+156;81-85;bpm;Nein;81;85
+160;65-67;bpm;Nein;65;67
 163;89-107;bpm;Ja;89;107

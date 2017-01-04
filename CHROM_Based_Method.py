@@ -27,27 +27,27 @@ def chrom_based_pulse_signal_estimation(video_frames, fps):
         green_list.append(green_frame_avg)
         blue_list.append(blue_frame_avg)
 
-        normalized_red_temp_array = normalize_mean_over_interval(red_list)
-        normalized_green_temp_array = normalize_mean_over_interval(green_list)
-        normalized_blue_temp_array = normalize_mean_over_interval(blue_list)
+    normalized_red_temp_array = normalize_mean_over_interval(red_list)
+    normalized_green_temp_array = normalize_mean_over_interval(green_list)
+    normalized_blue_temp_array = normalize_mean_over_interval(blue_list)
 
-        # Chrominance Signal X & Y
-        chrom_x = 3 * normalized_red_temp_array - 2 * normalized_green_temp_array
-        chrom_y = 1.5 * normalized_red_temp_array + normalized_green_temp_array - 1.5 * normalized_blue_temp_array
+    # Chrominance Signal X & Y
+    chrom_x = 3 * normalized_red_temp_array - 2 * normalized_green_temp_array
+    chrom_y = 1.5 * normalized_red_temp_array + normalized_green_temp_array - 1.5 * normalized_blue_temp_array
 
-        # Standard deviation of x & y
-        std_dev_x = np.std(chrom_x)
-        std_dev_y = np.std(chrom_y)
+    # Standard deviation of x & y
+    std_dev_x = np.std(chrom_x)
+    std_dev_y = np.std(chrom_y)
 
-        # alpha
-        alpha = std_dev_x / std_dev_y
+    # alpha
+    alpha = std_dev_x / std_dev_y
 
-        # pulse signal S
-        S = chrom_x - alpha * chrom_y
+    # pulse signal S
+    S = chrom_x - alpha * chrom_y
 
-        # Hann window signal
-        hann_window = np.hanning(len(S))
-        hann_window_signal = hann_window * S
+    # Hann window signal
+    hann_window = np.hanning(len(S))
+    hann_window_signal = hann_window * S
 
     # Fourier Transform
     raw = np.fft.fft(hann_window_signal, 512)
