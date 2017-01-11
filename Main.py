@@ -43,6 +43,12 @@ def plot_results(fft, heart_rates, overlap_signal=0, raw=0, pulse_signal=0, gree
     plt.show()
 
 
+def write_signals_to_txt(out_txt, signals_2darr):
+    with open(out_txt, 'wb') as outfile:
+        np.savetxt(outfile, signals_2darr, fmt='%i')
+
+
+
 def multi_video_calculation(dir_path, pulse_label_data):
 
     for file in os.listdir(dir_path):
@@ -67,7 +73,6 @@ def single_video_calculation(file, file_path, pulse_label_data):
 
     # Load all pulse value belonging to a certain video in array
     # Will be used for ROI labeling
-
     pulse_lower, pulse_upper = get_pulse_vals_from_label_data(pulse_label_data, file)
 
     # Für die Darstellung der Puls Ergebnismatrix
@@ -110,6 +115,7 @@ def single_video_calculation(file, file_path, pulse_label_data):
     plt.tight_layout()
     fig.savefig(file_path[:-4] + '.jpg')
 
+    plt.close()
     # plt.show()
     # plot_results(fft, heart_rates, raw, hann_w, S, green_avg)
 
@@ -117,7 +123,7 @@ def single_video_calculation(file, file_path, pulse_label_data):
 if __name__ == '__main__':
 
     start_time = time.time()
-
+    # dir_path = os.path.join('assets', 'Vid_Original')
     dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
     file = '00130.MTS'
     file_path = os.path.join(dir_path, file)

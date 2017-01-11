@@ -1,33 +1,41 @@
 import numpy as np
 import os
-import cv2
-
-from Video_Tools import devide_frame_into_roi_means
-from Video_Tools import load_video
-from matplotlib import pyplot as plt
 
 
-dir_path = os.path.join('assets', 'Vid_Original')
-file = '00100.MTS'
-file_path = os.path.join(dir_path, file)
-
-video_frames, fps = load_video(file_path)
-video_frames = video_frames[1:100]
-
-buffer_size = 32
-buffer_size_half = int(buffer_size/2)
-frame_buffer = []
-
-j = 0
-for frame in video_frames:
-
-    buffer_count = len(frame_buffer)
-
-    if buffer_count >= buffer_size:
-        frame_buffer = frame_buffer[-buffer_size_half:]
-
-    frame_buffer.append(j)
-    print(frame_buffer)
-    j += 1
+width = 5
+puls_signal_data = np.zeros([width], dtype='float64')
+for x in range(0, width):
+    puls_signal_data[x] = 2
 
 
+
+in_img = os.path.join('Assets', 'Mila_Ass_2.jpg')
+out_csv = os.path.join('Assets', 'Test.txt')
+
+data = np.zeros([8, 10], dtype='float64')
+
+H2 = np.arange(10).reshape((1, 10))
+I2 = np.arange(10).reshape((1, 10))
+
+H = np.ones([1, 10], dtype='float64')
+I = np.ones([1, 10], dtype='float64')
+
+
+data[7, :] = H2
+data[1, :] = I2
+
+# Write the array to disk
+with open(out_csv, 'wb') as outfile:
+
+    np.savetxt(outfile, data, fmt='%i')
+
+
+# Read the array from disk
+new_data = np.loadtxt('assets\Test.txt')
+
+print(new_data)
+
+new_data = new_data.reshape((2, 4, 10))
+
+print(type(new_data))
+print(new_data)
