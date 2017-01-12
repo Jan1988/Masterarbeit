@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 
 from Video_Tools import load_video, get_video_dimensions
 from CHROM_Based_Method import chrom_based_pulse_signal_estimation
-from POS_Based_Method import pos_based_method
+from POS_Based_Method import pos_based_method, pos_based_method_improved
 from Helper_Tools import load_label_data, get_pulse_vals_from_label_data, compare_pulse_vals, eliminate_weak_skin,\
     save_rois_with_label
 
@@ -48,7 +48,6 @@ def write_signals_to_txt(out_txt, signals_2darr):
         np.savetxt(outfile, signals_2darr, fmt='%i')
 
 
-
 def multi_video_calculation(dir_path, pulse_label_data):
 
     for file in os.listdir(dir_path):
@@ -66,7 +65,7 @@ def single_video_calculation(file, file_path, pulse_label_data):
     bpm_values = np.zeros((h_div, w_div), dtype='float64')
 
     video_frames, fps = load_video(file_path)
-    video_frames = video_frames[50:350]
+    video_frames = video_frames[22:310]
     frame_count, width, height = get_video_dimensions(video_frames)
     w_steps = int(width / w_div)
     h_steps = int(height / h_div)
@@ -90,7 +89,9 @@ def single_video_calculation(file, file_path, pulse_label_data):
     for x in range(0, width, w_steps):
         for y in range(0, height, h_steps):
             roi_time_series = video_frames[:, y:y+h_steps, x:x+w_steps]
-            bpm, fft, heart_rates, raw, hann_w, S, green_avg = pos_based_method(roi_time_series, fps)
+
+            # Puls-Signal Extraction
+            bpm, fft, heart_rates, raw, H, green_avg = pos_based_method_improved(roi_time_series, fps)
 
             sub1.text(x+w_steps/2, y+h_steps/2, round(bpm, 1), color=(0.0, 0.0, 0.0), fontsize=7, va='center', ha='center')
             sub2.text(int(x/w_steps), int(y/h_steps), round(bpm, 1), color=(0.745, 0.467, 0.294), fontsize=8, va='center', ha='center')
@@ -101,7 +102,7 @@ def single_video_calculation(file, file_path, pulse_label_data):
 
     # check neighbouring rois
     bool_skin_mat = eliminate_weak_skin(skin_mat)
-    save_rois_with_label(bool_skin_mat, last_frame, height, width, h_steps, w_steps, file[:-4])
+    # save_rois_with_label(bool_skin_mat, last_frame, height, width, h_steps, w_steps, file[:-4])
 
     sub1.set_title('BPM on ROIs')
     sub1.imshow(last_frame_clone)
@@ -134,3 +135,4 @@ if __name__ == '__main__':
     multi_video_calculation(dir_path, pulse_label_data)
 
     print("--- %s seconds ---" % (time.time() - start_time))
+
