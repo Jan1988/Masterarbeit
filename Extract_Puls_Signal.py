@@ -1,6 +1,8 @@
 
 import os
 import time
+import timeit
+
 import cv2
 import numpy as np
 
@@ -14,51 +16,77 @@ from Helper_Tools import load_label_data, get_pulse_vals_from_label_data, compar
 
 
 def extr_pos_based_method(time_series, fps):
+
+    # func_time = time.time()
+
     # sliding window size
     window_size = 48
 
     sequence_length = len(time_series)
     H = np.zeros(sequence_length, dtype='float64')
-    red = time_series[:, 2]
-    blue = time_series[:, 1]
-    green = time_series[:, 0]
 
-    red_buf = []
-    blue_buf = []
-    green_buf = []
+    interval_count = int(sequence_length / window_size) * 2
 
-    for n in range(1, sequence_length):
+    H = np.zeros(sequence_length, dtype='float64')
 
-        red_buf.append(red[n])
-        blue_buf.append(blue[n])
-        green_buf.append(green[n])
+    n = window_size
+    for i in range(interval_count):
+        m = n - window_size
 
-        m = n - window_size + 1
-        if m > 0:
-            # print('Window from ' + str(m-1) + ' ' + str(n) + ' length ' + str(len(H[m-1:n])))
+        # 5 temporal normalization
+        window = time_series[m:n]
+        mean_array = np.average(window, axis=0)
+        norm_array = window / mean_array
 
-            # 5 temporal normalization
-            red_norm = normalize_mean_over_interval(red_buf[m - 1:n])
-            green_norm = normalize_mean_over_interval(green_buf[m - 1:n])
-            blue_norm = normalize_mean_over_interval(blue_buf[m - 1:n])
+        # 6 projection
+        S1 = np.dot(norm_array, [-1, 1, 0])
+        S2 = np.dot(norm_array, [1, 1, -2])
 
-            # 6 projection
-            S1 = 0 * red_norm + 1 * green_norm - 1 * blue_norm
-            S2 = -2 * red_norm + 1 * green_norm + 1 * blue_norm
+        # 7 tuning
+        S1_std = np.std(S1)
+        S2_std = np.std(S2)
 
-            # 7 tuning
-            S1_std = np.std(S1)
-            S2_std = np.std(S2)
+        alpha = S1_std / S2_std
 
-            alpha = S1_std / S2_std
+        h = S1 + alpha * S2
 
-            h = S1 + alpha * S2
+        # Hann window signal
+        hann_window = np.hanning(len(h))
+        hann_windowed_signal = hann_window * h
 
-            # make h zero-mean
-            h_mean = np.mean(h)
-            h_no_mean = h - h_mean
+        # Overlap-adding
+        H[m:n] += hann_windowed_signal
 
-            H[m - 1:n] += h_no_mean
+        n += int(window_size / 2)
+
+    # for n in range(1, sequence_length):
+    #
+    #     m = n - window_size + 1
+    #     if m > 0:
+    #         buffer_win = time_series[m - 1:n]
+    #         # 5 temporal normalization
+    #         mean_array = np.average(buffer_win, axis=0)
+    #         norm_array = buffer_win / mean_array
+    #
+    #         # 6 projection
+    #         S1 = np.dot(norm_array, [-1, 1, 0])
+    #         S2 = np.dot(norm_array, [1, 1, -2])
+    #
+    #         # 7 tuning
+    #         S1_std = np.std(S1)
+    #         S2_std = np.std(S2)
+    #
+    #         alpha = S1_std / S2_std
+    #
+    #         h = S1 + alpha * S2
+    #
+    #         # make h zero-mean
+    #         h_mean = np.mean(h)
+    #         h_no_mean = h - h_mean
+    #
+    #         H[m - 1:n] += h_no_mean
+
+    # print("4--- %s seconds ---" % (time.time() - func_time))
 
     # Fourier Transform
     raw = np.fft.fft(H, 512)
@@ -90,6 +118,8 @@ def extr_pos_based_method(time_series, fps):
     #
     # plt.show()
 
+    # print("4--- %s seconds ---" % (time.time() - func_time))
+    # print(time.perf_counter())
     return fft1[bound_low:bound_high]
 
 
@@ -109,14 +139,14 @@ def extr_single_video_calculation(file, file_path):
         for y in range(0, height):
 
             roi_time_series = video_frames[:, y, x]
-            print("1--- %s seconds ---" % (time.time() - start_time))
+            # print("1--- %s seconds ---" % (time.time() - start_time))
 
             puls_signal = extr_pos_based_method(roi_time_series, fps)
-            print("2--- %s seconds ---" % (time.time() - start_time))
 
             _pulse_signal_data[x, y, :] = puls_signal
-            print("3--- %s seconds ---" % (time.time() - start_time))
-        print('Fortschritt: ' + str(int(x / width)) + '%')
+        print("3--- %s seconds ---" % (time.time() - start_time))
+        # print('Fortschritt: ' + str(int(x / width)) + '%')
+        print("Fortschritt: %.3f %%" % (x / width))
 
     return _pulse_signal_data
 
