@@ -1,15 +1,11 @@
 
 import os
 import time
-import timeit
-
-import cv2
 import numpy as np
 
 from matplotlib import pyplot as plt
 
-from Video_Tools import load_video, get_video_dimensions, normalize_mean_over_interval
-from CHROM_Based_Method import chrom_based_pulse_signal_estimation
+from Video_Tools import load_video, get_video_dimensions
 from POS_Based_Method import pos_based_method, extract_pos_based_method_improved
 from Helper_Tools import load_label_data, get_pulse_vals_from_label_data, compare_pulse_vals, eliminate_weak_skin, \
     save_rois_with_label
@@ -93,7 +89,7 @@ def extr_single_video_calculation(file, file_path):
     frame_count, width, height = get_video_dimensions(video_frames)
 
     # Riesen-ndarray für puls-signale für breite*höhe eines Videos
-    _pulse_signal_data = np.zeros([width, height, 44], dtype='float64')
+    _pulse_signal_data = np.zeros([height, width, 44], dtype='float64')
 
     for x in range(0, width):
         for y in range(0, height):
@@ -102,12 +98,18 @@ def extr_single_video_calculation(file, file_path):
 
             puls_signal = extract_pos_based_method_improved(px_time_series, fps)
 
-            _pulse_signal_data[x, y, :] = puls_signal
+            _pulse_signal_data[y, x] = puls_signal
 
-        # print("3--- %s seconds ---" % (time.time() - start_time))
-        print("Fortschritt: %.3f %%" % (x / width))
-    print(time.perf_counter())
-    return _pulse_signal_data
+        # print('Bildpunkt: ' + str(x))
+        print("Fortschritt: %.1f %%" % ((x+1) / width*100))
+
+    # reshape to fit in .txt file
+    reshaped_pulse_signal_data = _pulse_signal_data.reshape(height * width, _pulse_signal_data.shape[2])
+
+    print("--- Extr Finished %s seconds ---" % (time.time() - start_time))
+    # print(time.perf_counter())
+
+    return reshaped_pulse_signal_data
 
 
 if __name__ == '__main__':
@@ -115,21 +117,21 @@ if __name__ == '__main__':
     start_time = time.time()
     # dir_path = os.path.join('assets', 'Vid_Original')
     dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
-    file = '00130.MTS'
+    file = '00128.MTS'
     file_path = os.path.join(dir_path, file)
-
-
 
     # pulse_label_data = load_label_data()
 
-    pulse_signal_data = extr_single_video_calculation(file, file_path)
+    pulse_signal_data2D = extr_single_video_calculation(file, file_path)
 
-    dest_folder = os.path.join('assets', 'Pulse_Data', file[:-4], '')
+    dest_folder = os.path.join('assets', 'Pulse_Data', '')
     if not os.path.exists(dest_folder):
         os.makedirs(dest_folder)
 
-    file_path_out = dest_folder + file + '.txt'
-    with open(dest_folder, 'wb') as outfile:
-        np.savetxt(outfile, pulse_signal_data, fmt='%i')
+    file_path_out = dest_folder + file[:-4] + '.txt'
+    with open(file_path_out, 'wb') as outfile:
+        # for slice_2d in pulse_signal_data:
+        np.savetxt(outfile, pulse_signal_data2D, fmt='%.8f')
 
-    print("--- %s seconds ---" % (time.time() - start_time))
+    print("--- Algorithm Completed %s seconds ---" % (time.time() - start_time))
+

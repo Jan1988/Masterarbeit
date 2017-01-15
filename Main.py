@@ -124,7 +124,7 @@ def single_video_calculation(file, file_path, pulse_label_data):
 if __name__ == '__main__':
 
     start_time = time.time()
-    # dir_path = os.path.join('assets', 'Vid_Original')
+    dir_path = os.path.join('assets', 'Vid_Original')
     dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
     file = '00130.MTS'
     file_path = os.path.join(dir_path, file)

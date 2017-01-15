@@ -5,8 +5,6 @@ from matplotlib import pyplot as plt
 from Video_Tools import split_frame_into_rgb_channels, normalize_mean_over_interval
 
 
-
-
 def pos_based_method(video_frames, fps):
 
     sequence_length = len(video_frames)
@@ -187,8 +185,11 @@ def extract_pos_based_method_improved(_time_series, _fps):
     raw = np.fft.fft(H, 512)
     L = int(len(raw) / 2 + 1)
     fft1 = np.abs(raw[:L])
-
+    print(L)
+    print(_fps/2)
     frequencies = np.linspace(0, _fps / 2, L, endpoint=True)
+    print(frequencies)
+
     heart_rates = frequencies * 60
 
     # bandpass filter for pulse
