@@ -10,6 +10,7 @@ from CHROM_Based_Method import chrom_based_pulse_signal_estimation
 from POS_Based_Method import pos_based_method, pos_based_method_improved
 from Helper_Tools import load_label_data, get_pulse_vals_from_label_data, compare_pulse_vals, eliminate_weak_skin,\
     save_rois_with_label
+from Skin_Detection import skin_detection_algorithm_multi_video
 
 
 def plot_results(fft, heart_rates, overlap_signal=0, raw=0, pulse_signal=0, green_norm=0):
@@ -42,10 +43,9 @@ def plot_results(fft, heart_rates, overlap_signal=0, raw=0, pulse_signal=0, gree
 
     plt.show()
 
-
-def write_signals_to_txt(out_txt, signals_2darr):
-    with open(out_txt, 'wb') as outfile:
-        np.savetxt(outfile, signals_2darr, fmt='%i')
+# def write_signals_to_txt(out_txt, signals_2darr):
+#     with open(out_txt, 'wb') as outfile:
+#         np.savetxt(outfile, signals_2darr, fmt='%i')
 
 
 def multi_video_calculation(dir_path, pulse_label_data):
@@ -124,15 +124,22 @@ def single_video_calculation(file, file_path, pulse_label_data):
 if __name__ == '__main__':
 
     start_time = time.time()
-    dir_path = os.path.join('assets', 'Vid_Original')
-    dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
-    file = '00130.MTS'
-    file_path = os.path.join(dir_path, file)
+    # input_dir_path = os.path.join('assets', 'Vid_Original')
+    input_dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
+    dest_dir_path = os.path.join('assets', 'Pulse_Data', '')
+    dest_skin_dir_path = os.path.join('assets', 'Skin_Label_Data', '')
 
-    pulse_label_data = load_label_data()
+    file = '00128.MTS'
+    file_path = os.path.join(input_dir_path, file)
 
-    # single_video_calculation(file, file_path, pulse_label_data)
-    multi_video_calculation(dir_path, pulse_label_data)
+
+    # pulse_label_data = load_label_data()
+    #
+    # # single_video_calculation(file, file_path, pulse_label_data)
+    # multi_video_calculation(input_dir_path, pulse_label_data)
+
+    skin_detection_algorithm_multi_video(input_dir_path, dest_dir_path)
+
 
     print("--- %s seconds ---" % (time.time() - start_time))
 
