@@ -185,10 +185,8 @@ def extract_pos_based_method_improved(_time_series, _fps):
     raw = np.fft.fft(H, 512)
     L = int(len(raw) / 2 + 1)
     fft1 = np.abs(raw[:L])
-    print(L)
-    print(_fps/2)
+
     frequencies = np.linspace(0, _fps / 2, L, endpoint=True)
-    print(frequencies)
 
     heart_rates = frequencies * 60
 

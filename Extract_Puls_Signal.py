@@ -104,12 +104,12 @@ def extr_single_video_calculation(file, file_path):
         print("Fortschritt: %.1f %%" % ((x+1) / width*100))
 
     # reshape to fit in .txt file
-    reshaped_pulse_signal_data = _pulse_signal_data.reshape(height * width, _pulse_signal_data.shape[2])
+    # reshaped_pulse_signal_data = _pulse_signal_data.reshape(height * width, _pulse_signal_data.shape[2])
 
     print("--- Extr Finished %s seconds ---" % (time.time() - start_time))
     # print(time.perf_counter())
 
-    return reshaped_pulse_signal_data
+    return _pulse_signal_data
 
 
 if __name__ == '__main__':
@@ -117,21 +117,23 @@ if __name__ == '__main__':
     start_time = time.time()
     # dir_path = os.path.join('assets', 'Vid_Original')
     dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
-    file = '00128.MTS'
+    file = '00130.MTS'
     file_path = os.path.join(dir_path, file)
 
     # pulse_label_data = load_label_data()
 
-    pulse_signal_data2D = extr_single_video_calculation(file, file_path)
+    pulse_signal_data = extr_single_video_calculation(file, file_path)
 
     dest_folder = os.path.join('assets', 'Pulse_Data', '')
     if not os.path.exists(dest_folder):
         os.makedirs(dest_folder)
 
-    file_path_out = dest_folder + file[:-4] + '.txt'
-    with open(file_path_out, 'wb') as outfile:
-        # for slice_2d in pulse_signal_data:
-        np.savetxt(outfile, pulse_signal_data2D, fmt='%.8f')
+    file_path_out = dest_folder + file[:-4] + '.npy'
+    np.save(file_path_out, pulse_signal_data)
+
+    # with open(file_path_out, 'wb') as outfile:
+    #     # for slice_2d in pulse_signal_data:
+    #     np.savetxt(outfile, pulse_signal_data2D, fmt='%.8f')
 
     print("--- Algorithm Completed %s seconds ---" % (time.time() - start_time))
 

@@ -138,7 +138,7 @@ if __name__ == '__main__':
     # # single_video_calculation(file, file_path, pulse_label_data)
     # multi_video_calculation(input_dir_path, pulse_label_data)
 
-    skin_detection_algorithm_multi_video(input_dir_path, dest_dir_path)
+    skin_detection_algorithm_multi_video(input_dir_path, dest_skin_dir_path)
 
 
     print("--- %s seconds ---" % (time.time() - start_time))

@@ -86,6 +86,6 @@ def skin_detection_algorithm_single_video(file, dir_path, dest_folder, show_figu
     with open(file_path_out, 'wb') as outfile:
         # for slice_2d in pulse_signal_data:
         np.savetxt(outfile, skin_arr, fmt='%i')
-
+        print("Saving " + file_path_out)
     # cleanup the camera and close any open windows
     cv2.destroyAllWindows()
