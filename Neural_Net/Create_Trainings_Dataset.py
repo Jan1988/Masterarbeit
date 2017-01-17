@@ -5,41 +5,68 @@ import numpy as np
 import time
 
 
-start_time = time.time()
+def prepare_skin_mask(_in_skin_mask_path, _out_skin_mask_path):
 
-input_dir_path = os.path.join('assets', 'Pulse_Data')
-skin_mask_dir_path = os.path.join('assets', 'Skin_Label_Data', 'Gute_Ergebnisse')
+    # Read the array in .txt from disk
+    new_data = pd.read_csv(_in_skin_mask_path, sep=" ", header=None)
 
-file = '00128.txt'
-skin_mask_file = 'Skin_00128.txt'
-file_path = os.path.join(input_dir_path, file)
-skin_mask_file_path = os.path.join(skin_mask_dir_path, skin_mask_file)
+    # original shape of the array
+    new_data = new_data.values
+    # Reshape it to 1dimensional array
+    reshaped_new_data = new_data.reshape((1080 * 1920))
 
-w_div = 16
-h_div = 8
+    # Save it as .npy file
+    np.save(_out_skin_mask_path, reshaped_new_data)
 
-width = 1920
-height = 1080
+    # test loading and equality
+    npy_loaded = np.load(_out_skin_mask_path)
+    print(np.array_equal(reshaped_new_data, npy_loaded))
 
-w_steps = int(width / w_div)
-h_steps = int(height / h_div)
-
-# Read the array from disk
-new_data = pd.read_csv(skin_mask_file_path, sep=" ", header=None)
-
-# original shape of the array
-new_data = new_data.values
-#
-
-reshaped_new_data = new_data.reshape((1080*1920))
-
-np.save('Skin_00128.npy', reshaped_new_data)
+    one_index = npy_loaded > 0
+    print(len(npy_loaded[one_index]))
 
 
-npy_loaded = np.load('Skin_00128.npy')
-print(np.array_equal(reshaped_new_data, npy_loaded))
+def pulse_data_txt_to_npy(_in_pulse_data_path, _out_pulse_data_path):
+    # Read the array in .txt from disk
+    new_data = pd.read_csv(_in_pulse_data_path, sep=" ", header=None)
+
+    # original shape of the array
+    new_data = new_data.values
+
+    # Save it as .npy file
+    np.save(_out_pulse_data_path, new_data)
+
+    # test loading and equality
+    npy_loaded = np.load(_out_pulse_data_path)
+    print(np.array_equal(new_data, npy_loaded))
 
 
+if __name__ == '__main__':
+    start_time = time.time()
+
+    # skin_mask_dir = os.path.join('assets', 'Skin_Label_Data')
+    # in_skin_mask_file = 'Skin_00130.txt'
+    # out_skin_mask_file = 'Skin_00130.npy'
+    # in_skin_mask_path = os.path.join(skin_mask_dir, in_skin_mask_file)
+    # out_skin_mask_path = os.path.join(skin_mask_dir, out_skin_mask_file)
+
+    pulse_data_dir = os.path.join('assets', 'Pulse_Data')
+    in_pulse_data_file = '00130.txt'
+    out_pulse_data_file = '00130.npy'
+    in_pulse_data_path = os.path.join(pulse_data_dir, in_pulse_data_file)
+    out_pulse_data_path = os.path.join(pulse_data_dir, out_pulse_data_file)
+
+    w_div = 16
+    h_div = 8
+
+    width = 1920
+    height = 1080
+
+    w_steps = int(width / w_div)
+    h_steps = int(height / h_div)
+
+    # prepare_skin_mask(in_skin_mask_path, out_skin_mask_path)
+    pulse_data_txt_to_npy(in_pulse_data_path, out_pulse_data_path)
 
 # for i, val in enumerate(reshaped_new_data):
 #

@@ -9,12 +9,12 @@ from keras.layers.convolutional import MaxPooling2D
 from keras.utils import np_utils
 from keras import backend as K
 
-from Load_Dataset import get_dataset
+from Neural_Net.Load_Dataset import get_dataset
 
 def baseline_model():
     # create model
     model = Sequential()
-    model.add(Convolution2D(32, 5, 5, border_mode='valid', input_shape=(1, 28, 28), activation='relu'))
+    model.add(Convolution2D(32, 0, 1, border_mode='valid', input_shape=(44, 1, 1), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.2))
     model.add(Flatten())
@@ -34,15 +34,16 @@ if __name__ == '__main__':
 
     X_train, X_test, y_train, y_test = get_dataset()
     # reshape to be [samples][pixels][width][height]
-    X_train = X_train.reshape(X_train.shape[0], 1, 28, 28).astype('float32')
-    X_test = X_test.reshape(X_test.shape[0], 1, 28, 28).astype('float32')
+    # X_train = X_train.reshape(X_train.shape[0], 1, 28, 28).astype('float32')
+    # X_test = X_test.reshape(X_test.shape[0], 1, 28, 28).astype('float32')
 
-    X_train = X_train / 255
-    X_test = X_test / 255
+    # X_train = X_train / 255
+    # X_test = X_test / 255
     # one hot encode outputs
     y_train = np_utils.to_categorical(y_train)
     y_test = np_utils.to_categorical(y_test)
     num_classes = y_test.shape[1]
+    print(num_classes)
 
     # build the model
     model = baseline_model()

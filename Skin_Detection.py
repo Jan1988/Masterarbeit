@@ -63,15 +63,16 @@ def skin_detection_algorithm_single_video(file, dir_path, dest_folder, show_figu
         # cv2.imshow("images", np.hstack([frame, skin]))
         # cv2.imshow("images", skin)
 
-        # Where values are low
-        mean_skin = np.mean(skin, axis=2)
-        low_values_indices = mean_skin < 1
-        skin_arr[low_values_indices] = 0
+
 
         # # if the 'q' key is pressed, stop the loop
         # if cv2.waitKey(1) & 0xFF == ord("q"):
         #     break
 
+    # Where values are low
+    mean_skin = np.mean(skin, axis=2)
+    low_values_indices = mean_skin < 1
+    skin_arr[low_values_indices] -= 1
 
     fig = plt.figure(figsize=(17, 9))
     sub1 = fig.add_subplot(111)

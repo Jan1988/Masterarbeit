@@ -6,8 +6,8 @@ from sklearn.cross_validation import train_test_split
 
 def get_dataset():
 
-    signal_data_path = os.path.join('assets', '00128.npy')
-    skin_mask_data_path = os.path.join('assets', 'Skin_00128.npy')
+    signal_data_path = os.path.join('assets', '00130.npy')
+    skin_mask_data_path = os.path.join('assets', 'Skin_00130.npy')
 
     pixel_count = 2073600
     width = 1
@@ -29,4 +29,4 @@ def get_dataset():
     # split into 80% for train and 20% for test
     X_train, X_test, y_train, y_test = train_test_split(reshaped_signal_data, skin_mask_data, test_size=0.20, random_state=seed)
 
-    return X_train, X_test, y_train, y_test
+    return X_train, y_train, X_test, y_test
