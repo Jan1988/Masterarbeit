@@ -1,6 +1,7 @@
 from __future__ import print_function
 
-from keras.datasets import mnist
+import numpy as np
+
 from keras.models import Sequential
 from keras.layers import Dense, Activation
 from keras.layers import SimpleRNN
@@ -9,13 +10,13 @@ from keras.optimizers import RMSprop
 from keras.utils import np_utils
 from Neural_Net.Load_Dataset import get_dataset
 
-class_weight = {0: 1.,
-                1: 4.55}
+# fix random seed for reproducibility
+np.random.seed(7)
 
-batch_size = 32
+batch_size = 128
 # nb_classes = 10
-nb_epochs = 200
-hidden_units = 100
+nb_epochs = 20
+hidden_units = 20
 
 learning_rate = 1e-6
 clip_norm = 1.0
@@ -27,8 +28,7 @@ X_train = X_train.reshape(X_train.shape[0], -1, 1)
 X_test = X_test.reshape(X_test.shape[0], -1, 1)
 X_train = X_train.astype('float32')
 X_test = X_test.astype('float32')
-X_train /= 255
-X_test /= 255
+
 print('X_train shape:', X_train.shape)
 print(X_train.shape[0], 'train samples')
 print(X_test.shape[0], 'test samples')
@@ -51,7 +51,7 @@ model.compile(loss='categorical_crossentropy',
               optimizer=rmsprop,
               metrics=['accuracy'])
 
-model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epochs, verbose=1, validation_data=(X_test, Y_test), class_weight=class_weight)
+model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epochs, verbose=1, validation_data=(X_test, Y_test))
 
 scores = model.evaluate(X_test, Y_test, verbose=0)
 print('IRNN test score:', scores[0])
