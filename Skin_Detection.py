@@ -97,8 +97,8 @@ def skin_detection_algorithm_single_video(_file, _dir_path, _dest_folder, show_f
     low_values_indices = skin_arr < -2
     final_mask[low_values_indices] = 0
 
-    # Manuel modyfying
-    final_mask[950:1080, 600:860] = 0
+    # # Manuel modyfying
+    # final_mask[950:1080, 600:860] = 0
 
     fig = plt.figure(figsize=(17, 9))
     sub1 = fig.add_subplot(111)
