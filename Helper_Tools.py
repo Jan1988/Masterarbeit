@@ -71,7 +71,9 @@ def eliminate_weak_skin(skin_mat):
                           [1, 1, 1],
                           [1, 1, 1]])
 
-    results = ndimage.generic_filter(skin_mat, test_func, footprint=footprint)
+    results = ndimage.generic_filter(skin_mat, test_func, footprint=footprint, mode='constant')
+
+    # 255 / 9 = 28 -> 2 neighbouring regions, threshold must be >56
     bool_skin_mat = results > 56
     return bool_skin_mat
 

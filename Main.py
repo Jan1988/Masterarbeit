@@ -12,6 +12,7 @@ from Helper_Tools import load_label_data, get_pulse_vals_from_label_data, compar
     save_rois_with_label
 from Skin_Detection import skin_detection_algorithm_multi_video
 
+start_time = time.time()
 
 def plot_results(fft, heart_rates, overlap_signal=0, raw=0, pulse_signal=0, green_norm=0):
     # plt.axis([0, n, y_lower, y_upper])
@@ -58,8 +59,9 @@ def multi_video_calculation(dir_path, pulse_label_data):
 
 
 def single_video_calculation(file, file_path, pulse_label_data):
-    w_div = 16
-    h_div = 8
+    start_time = time.time()
+    w_div = 64
+    h_div = 32
 
     skin_mat = np.zeros((h_div, w_div), dtype='float64')
     bpm_values = np.zeros((h_div, w_div), dtype='float64')
@@ -86,19 +88,27 @@ def single_video_calculation(file, file_path, pulse_label_data):
     last_frame_clone = last_frame.copy()
 
     '''BPM Estimation for every ROI'''
+
+    # Hier wird der ungeradere Rest abgeschnitten
+    width = w_steps * w_div
+    height = h_steps * h_div
     for x in range(0, width, w_steps):
         for y in range(0, height, h_steps):
+            roi_ind_x = int(x / w_steps)
+            roi_ind_y = int(y / h_steps)
+
             roi_time_series = video_frames[:, y:y+h_steps, x:x+w_steps]
+
 
             # Puls-Signal Extraction
             bpm, fft, heart_rates, raw, H, green_avg = pos_based_method_improved(roi_time_series, fps)
 
             sub1.text(x+w_steps/2, y+h_steps/2, round(bpm, 1), color=(0.0, 0.0, 0.0), fontsize=7, va='center', ha='center')
-            sub2.text(int(x/w_steps), int(y/h_steps), round(bpm, 1), color=(0.745, 0.467, 0.294), fontsize=8, va='center', ha='center')
+            sub2.text(roi_ind_x, int(y/h_steps), round(bpm, 1), color=(0.745, 0.467, 0.294), fontsize=8, va='center', ha='center')
             cv2.rectangle(last_frame_clone, (x, y), (x + w_steps, y + h_steps), (0, 0, 0), 2)
 
-            bpm_values[int(y/h_steps), int(x/w_steps)] = bpm
-            skin_mat[int(y/h_steps), int(x/w_steps)] = compare_pulse_vals(bpm, pulse_lower, pulse_upper)
+            bpm_values[roi_ind_y, roi_ind_x] = bpm
+            skin_mat[roi_ind_y, roi_ind_x] = compare_pulse_vals(bpm, pulse_lower, pulse_upper)
 
     # check neighbouring rois
     bool_skin_mat = eliminate_weak_skin(skin_mat)
@@ -119,11 +129,12 @@ def single_video_calculation(file, file_path, pulse_label_data):
     plt.close()
     # plt.show()
     # plot_results(fft, heart_rates, raw, hann_w, S, green_avg)
+    print("--- Algorithm Completed %s seconds ---" % (time.time() - start_time))
 
 
 if __name__ == '__main__':
 
-    start_time = time.time()
+
     # input_dir_path = os.path.join('assets', 'Vid_Original')
     input_dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
     dest_dir_path = os.path.join('assets', 'Pulse_Data', '')
@@ -132,8 +143,7 @@ if __name__ == '__main__':
     file = '00128.MTS'
     file_path = os.path.join(input_dir_path, file)
 
-
-    # pulse_label_data = load_label_data()
+    pulse_label_data = load_label_data()
     #
     # # single_video_calculation(file, file_path, pulse_label_data)
     # multi_video_calculation(input_dir_path, pulse_label_data)

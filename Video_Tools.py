@@ -125,7 +125,7 @@ def devide_frame_into_roi_means(frame, div_width, div_height):
             roi = frame[y:y + height_steps, x:x + width_steps]
             cv2.rectangle(frame_clone, (x, y), (x + width_steps, y + height_steps), (0, 0, 0), 2)
 
-            #2D array wird mit den Means der ROIs gefüllt
+            #2D array is filled with ROI means
             roi_means_2darray[int(x / width_steps), int(y / height_steps)] = np.mean(roi, axis=(0, 1))
 
     return roi_means_2darray, frame_clone

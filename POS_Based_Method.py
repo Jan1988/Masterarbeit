@@ -176,9 +176,9 @@ def extract_pos_based_method_improved(_time_series, _fps):
     # last window is splitted by half and added at the end and front of H
     last_hann_windowed_s = rgb_into_puls_signal(_time_series[m:n], hann_window)
 
-    # 1te Hälfte Hinten dazu
+    # 1st half added at the back
     H[-half_window_size:] += last_hann_windowed_s[:half_window_size]
-    # 2te Hälfte Vorne dazu
+    # 2nd half added at the front
     H[0:half_window_size] += last_hann_windowed_s[half_window_size:]
 
     # Fourier Transform
