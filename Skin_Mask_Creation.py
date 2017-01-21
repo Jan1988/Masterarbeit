@@ -40,7 +40,6 @@ def skin_detection_algorithm_single_video(_file, _dir_path, _dest_folder, show_f
     max_vals = []
     min_vals = []
 
-
     # keep looping over the frames in the video
     for i, frame in enumerate(video_frames):
 
@@ -117,17 +116,76 @@ def skin_detection_algorithm_single_video(_file, _dir_path, _dest_folder, show_f
     cv2.destroyAllWindows()
 
 
+def roi_skin_mask_multi_creation(in_dir, out_dir):
+
+    for file in os.listdir(in_dir):
+        if file.endswith(".npy"):
+            roi_skin_mask_creation(file, in_dir, out_dir)
+
+
+def roi_skin_mask_creation(_file, in_dir, out_dir, show_figure=False):
+
+    skin_mask_file_path = os.path.join(in_dir, _file)
+
+    w_div = 64
+    h_div = 32
+    skin_mask = np.load(skin_mask_file_path)
+    height, width = skin_mask.shape
+    w_steps = int(width / w_div)
+    h_steps = int(height / h_div)
+
+    roi_skin_mask = np.zeros([h_div, w_div])
+
+    # Hier wird der ungeradere Rest abgeschnitten
+    width = w_steps * w_div
+    height = h_steps * h_div
+    for x in range(0, width, w_steps):
+        for y in range(0, height, h_steps):
+            roi_ind_x = int(x / w_steps)
+            roi_ind_y = int(y / h_steps)
+
+            roi = skin_mask[y:y + h_steps, x:x + w_steps]
+
+            roi_skin_mask[roi_ind_y, roi_ind_x] = np.mean(roi)
+
+    skin_ind = roi_skin_mask > 0.5
+    non_skin_ind = roi_skin_mask <= 0.5
+
+    roi_skin_mask[skin_ind] = 1.0
+    roi_skin_mask[non_skin_ind] = 0.0
+
+    roi_skin_mask_file_path = os.path.join(out_dir, 'ROI_' + _file)
+
+    fig = plt.figure(figsize=(17, 9))
+    sub1 = fig.add_subplot(111)
+    sub1.set_title('roi_skin_mask')
+    sub1.imshow(roi_skin_mask)
+    fig.savefig(roi_skin_mask_file_path[:-4] + '.jpg')
+    if show_figure:
+        plt.show()
+
+
+
+    # Save it as .npy file
+    np.save(roi_skin_mask_file_path, roi_skin_mask)
+    cv2.destroyAllWindows()
+
 if __name__ == '__main__':
 
     # input_dir_path = os.path.join('assets', 'Vid_Original')
     input_dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
     dest_dir_path = os.path.join('assets', 'Pulse_Data', '')
-    dest_skin_dir_path = os.path.join('assets', 'Skin_Label_Data', '')
+    skin_label_dir = os.path.join('assets', 'Skin_Label_Data')
     file = '00149.MTS'
     file_path = os.path.join(input_dir_path, file)
+    skin_mask_file = 'Skin_00163.npy'
+    skin_mask_file_path = os.path.join(skin_label_dir, skin_mask_file)
+
+    roi_skin_mask_multi_creation(skin_label_dir, skin_label_dir)
+    # roi_skin_mask_creation(skin_mask_file, skin_label_dir, skin_label_dir)
 
     # skin_detection_algorithm_multi_video(input_dir_path, dest_skin_dir_path)
-    skin_detection_algorithm_single_video(file, input_dir_path, dest_skin_dir_path)
+    # skin_detection_algorithm_single_video(file, input_dir_path, skin_label_dir)
 
 
     print("--- %s seconds ---" % (time.time() - start_time))

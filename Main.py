@@ -10,7 +10,7 @@ from CHROM_Based_Method import chrom_based_pulse_signal_estimation
 from POS_Based_Method import pos_based_method, pos_based_method_improved
 from Helper_Tools import load_label_data, get_pulse_vals_from_label_data, compare_pulse_vals, eliminate_weak_skin,\
     save_rois_with_label
-from Skin_Detection import skin_detection_algorithm_multi_video
+from Skin_Mask_Creation import skin_detection_algorithm_multi_video
 
 start_time = time.time()
 

@@ -1,7 +1,9 @@
 from __future__ import print_function
 
 import numpy as np
+import os
 
+from keras.datasets import mnist
 from keras.models import Sequential
 from keras.layers import Dense, Activation
 from keras.layers import SimpleRNN
@@ -10,20 +12,32 @@ from keras.optimizers import RMSprop
 from keras.utils import np_utils
 from Neural_Net.Load_Dataset import get_dataset
 
+
+# pulse_signal_dataset_path = os.path.join('assets', 'Balanced_Data', 'Balanced_00160.npy')
+pulse_signal_dataset_path = os.path.join('assets', 'ROI_Full_Dataset.npy')
+
 # fix random seed for reproducibility
 np.random.seed(7)
 
 batch_size = 128
 # nb_classes = 10
-nb_epochs = 20
-hidden_units = 20
+nb_epochs = 500
+hidden_units = 50
 
 learning_rate = 1e-6
 clip_norm = 1.0
 
-# the data, shuffled and split between train and test sets
-X_train, y_train, X_test, y_test = get_dataset()
+#
+# (X_train_2, y_train_2), (X_test_2, y_test_2) = mnist.load_data()
+# X_train_2 = X_train_2.reshape(X_train_2.shape[0], -1, 1)
+# X_test_2 = X_test_2.reshape(X_test_2.shape[0], -1, 1)
 
+
+# the data, shuffled and split between train and test sets
+X_train, y_train, X_test, y_test = get_dataset(pulse_signal_dataset_path)
+
+# Reshape the data to be used by a Tensorflow CNN. Shape is
+# (nb_of_samples, img_width, img_heigh, nb_of_color_channels)
 X_train = X_train.reshape(X_train.shape[0], -1, 1)
 X_test = X_test.reshape(X_test.shape[0], -1, 1)
 X_train = X_train.astype('float32')
@@ -56,3 +70,5 @@ model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epochs, verbose=1
 scores = model.evaluate(X_test, Y_test, verbose=0)
 print('IRNN test score:', scores[0])
 print('IRNN test accuracy:', scores[1])
+
+

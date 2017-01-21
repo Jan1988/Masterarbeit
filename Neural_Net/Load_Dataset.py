@@ -4,19 +4,12 @@ import os
 from sklearn.cross_validation import train_test_split
 
 
-def get_dataset():
+def get_dataset(_dataset_path):
 
-    balanced_signal_data_path = os.path.join('assets', 'Balanced_00130.npy')
+    pulse_signal_dataset = np.load(_dataset_path)
 
-    pixel_count = 2073600
-    width = 1
-    height = 1
-    # signal_data = np.ndarray((pixel_count, 44, width, height), dtype=np.float64)
-
-    signal_data = np.load(balanced_signal_data_path)
-
-    X = signal_data[:, 0:44]
-    Y = signal_data[:, 44]
+    X = pulse_signal_dataset[:, 0:44]
+    Y = pulse_signal_dataset[:, 44]
 
     # reshaped_signal_data = signal_data.reshape((pixel_count, 44, width, height))
 

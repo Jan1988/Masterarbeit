@@ -87,7 +87,7 @@ def pos_based_method(video_frames, fps):
 def pos_based_method_improved(_roi_time_series, _fps):
 
     # Spatial Averaging
-    _time_series = np.average(_roi_time_series, axis=(1, 2))
+    _time_series = np.mean(_roi_time_series, axis=(1, 2))
 
     # sliding window size
     window_size = 48
