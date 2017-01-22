@@ -3,11 +3,15 @@ from keras.layers import Convolution2D, Dense, Dropout, Flatten, MaxPooling2D
 from keras.utils import np_utils
 import numpy as np
 
+
+# input shape for tf: (rows, cols, channels)
+input_shape = (44, 1, 1)
+
 # import your data here instead
 # X - inputs, 10000 samples of 128-dimensional vectors
 # y - labels, 10000 samples of scalars from the set {0, 1, 2}
 
-X = np.random.rand(10000, 128).astype("float32")
+X = np.random.rand(10000, 44).astype("float32")
 y = np.random.randint(3, size=(10000, 1))
 
 # process the data to fit in a keras CNN properly
@@ -16,7 +20,7 @@ y = np.random.randint(3, size=(10000, 1))
 # C - number of channels per sample
 # (X, Y) - sample size
 
-X = X.reshape((10000, 1, 128, 1))
+X = X.reshape((10000, 44, 1, 1))
 
 # output labels should be one-hot vectors - ie,
 # 0 -> [0, 0, 1]
@@ -30,11 +34,10 @@ y = np_utils.to_categorical(y)
 # see http://keras.io for API reference
 
 cnn = Sequential()
-cnn.add(Convolution2D(64, 3, 1,
-                      border_mode="same",
-                      activation="relu",
-                      input_shape=(1, 128, 1)))
-cnn.add(Convolution2D(64, 3, 1, border_mode="same", activation="relu"))
+cnn.add(Convolution2D(64, 11, 1, border_mode="same", activation="relu", input_shape=input_shape))
+
+cnn.add(Convolution2D(64, 11, 1, border_mode="same", activation="relu"))
+
 cnn.add(MaxPooling2D(pool_size=(2, 1)))
 
 cnn.add(Convolution2D(128, 3, 1, border_mode="same", activation="relu"))

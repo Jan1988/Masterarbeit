@@ -7,46 +7,94 @@ from matplotlib import pyplot as plt
 
 from Video_Tools import load_video, get_video_dimensions
 from CHROM_Based_Method import chrom_based_pulse_signal_estimation
-from POS_Based_Method import pos_based_method, pos_based_method_improved
+from POS_Based_Method import pos_based_method_improved
 from Helper_Tools import load_label_data, get_pulse_vals_from_label_data, compare_pulse_vals, eliminate_weak_skin,\
     save_rois_with_label
 from Skin_Mask_Creation import skin_detection_algorithm_multi_video
 
 start_time = time.time()
+# input_dir_path = os.path.join('assets', 'Vid_Original')
+input_dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
+dest_dir_path = os.path.join('assets', 'Pulse_Data', '')
+dest_skin_dir_path = os.path.join('assets', 'Skin_Label_Data', '')
 
-def plot_results(fft, heart_rates, overlap_signal=0, raw=0, pulse_signal=0, green_norm=0):
+file = '00130.MTS'
+
+
+def plot_results(bpm, fft2, fft1, heart_rates, raw=0, overlap_signal=0, pulse_signal=0, norm_channels=0, time_series=0):
     # plt.axis([0, n, y_lower, y_upper])
+    tick_fontsize = 7
+    txt_fontsize = 10
+    nbins_x = 8
+    nbins_y = 5
+    txt_coord_x = 0.05
+    txt_coord_y = 0.9
+    txt_fontsize = 17
 
-    fig = plt.figure(figsize=(17, 9))
+    fig = plt.figure(figsize=(19, 15))
+    fig.suptitle('BPM: ' + str(bpm), fontsize=20, fontweight='bold')
 
-    sub1 = fig.add_subplot(331)
-    sub1.set_title('Norm. Avg.')
-    # sub1.plot(int_frames, red_norm, 'r',
-    #           int_frames, green_norm, 'g',
-    #           int_frames, blue_norm, 'b')
-    sub1.plot(green_norm, 'g')
+    sub1 = fig.add_subplot(321)
 
-    sub2 = fig.add_subplot(332)
-    sub2.set_title('Pulse Signal')
+    sub1.text(txt_coord_x, txt_coord_y, '(a)', fontsize=txt_fontsize, horizontalalignment='center', transform=sub1.transAxes)
+    # sub1.set_title('Normalisierte RGB-Kanäle', fontsize=subtitle_fontsize, loc='bottom')
+    sub1.plot(norm_channels[:, 2], 'r',
+              norm_channels[:, 1], 'g',
+              norm_channels[:, 0], 'b')
+    sub1.set_ylim([np.amin(norm_channels) * 0.9975, np.amax(norm_channels) * 1.0025])
+    sub1.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    # to specify number of ticks on both or any single axes
+    sub1.locator_params(axis='y', tight=True, nbins=nbins_y)
+    sub1.locator_params(axis='x', nbins=nbins_x)
+    sub1.ticklabel_format(useOffset=False)
+
+    # sub1.plot(green_norm, 'g')
+
+    sub2 = fig.add_subplot(322)
+    sub2.text(txt_coord_x, txt_coord_y, '(b)', fontsize=txt_fontsize, horizontalalignment='center', transform=sub2.transAxes)
+    # sub2.set_title('Pulse Signal', fontsize=subtitle_fontsize, )
     sub2.plot(pulse_signal, 'k')
+    sub2.set_ylim([np.amin(pulse_signal) * 1.25, np.amax(pulse_signal) * 1.25])
+    sub2.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    sub2.locator_params(axis='y', tight=True, nbins=nbins_y)
 
-    sub5 = fig.add_subplot(333)
-    sub5.set_title('Overlap-added Signal')
+
+    sub5 = fig.add_subplot(323)
+    sub5.text(txt_coord_x, txt_coord_y, '(c)', fontsize=txt_fontsize, horizontalalignment='center', transform=sub5.transAxes)
+    # sub5.set_title('Overlap-Added Signal', fontsize=subtitle_fontsize)
     sub5.plot(overlap_signal, 'k')
+    sub5.set_ylim([np.amin(overlap_signal) * 1.25, np.amax(overlap_signal) * 1.25])
+    sub5.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    sub5.locator_params(axis='y', tight=True, nbins=nbins_y)
 
-    sub8 = fig.add_subplot(334)
-    sub8.set_title('Hanning Window')
+    sub8 = fig.add_subplot(324)
+    sub8.text(txt_coord_x, txt_coord_y, '(d)', fontsize=txt_fontsize, horizontalalignment='center', transform=sub8.transAxes)
+    # sub8.set_title('Unverarbeitete FFT', fontsize=subtitle_fontsize)
     sub8.plot(raw, 'k')
+    sub8.tick_params(axis='both', which='major', labelsize=tick_fontsize)
 
-    sub7 = fig.add_subplot(335)
-    sub7.set_title('FFT abs')
-    sub7.plot(heart_rates, fft, 'k')
+    sub4 = fig.add_subplot(325)
+    sub4.text(txt_coord_x, txt_coord_y, '(e)', fontsize=txt_fontsize, horizontalalignment='center', transform=sub4.transAxes)
+    # sub4.set_title('FFT Absolut', fontsize=subtitle_fontsize)
+    sub4.plot(fft1, 'k')
+    sub4.tick_params(axis='both', which='major', labelsize=tick_fontsize)
 
+    # sub6 = fig.add_subplot(336)
+    # sub6.set_title('FFT pruned', fontsize=subtitle_fontsize)
+    # sub6.plot(fft2, 'k')
+    # sub6.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+
+    sub7 = fig.add_subplot(326)
+    sub7.text(txt_coord_x, txt_coord_y, '(f)', fontsize=txt_fontsize, horizontalalignment='center', transform=sub7.transAxes)
+    # sub7.set_title('FFT im Herzfrequenzbereich', fontsize=subtitle_fontsize)
+    sub7.plot(heart_rates, fft2, 'k')
+    sub7.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+
+    # plt.tight_layout()
+    fig.savefig(file_path[:-4] + '.png', bbox_inches='tight')
+    # fig.savefig(file_path[:-4] + '.png')
     plt.show()
-
-# def write_signals_to_txt(out_txt, signals_2darr):
-#     with open(out_txt, 'wb') as outfile:
-#         np.savetxt(outfile, signals_2darr, fmt='%i')
+    # plt.close()
 
 
 def multi_video_calculation(dir_path, pulse_label_data):
@@ -60,8 +108,8 @@ def multi_video_calculation(dir_path, pulse_label_data):
 
 def single_video_calculation(file, file_path, pulse_label_data):
     start_time = time.time()
-    w_div = 64
-    h_div = 32
+    w_div = 8
+    h_div = 4
 
     skin_mat = np.zeros((h_div, w_div), dtype='float64')
     bpm_values = np.zeros((h_div, w_div), dtype='float64')
@@ -76,13 +124,13 @@ def single_video_calculation(file, file_path, pulse_label_data):
     # Will be used for ROI labeling
     pulse_lower, pulse_upper = get_pulse_vals_from_label_data(pulse_label_data, file)
 
-    # Für die Darstellung der Puls Ergebnismatrix
-    fig = plt.figure(figsize=(18, 9))
-    fig.suptitle(file, fontsize=14, fontweight='bold')
-    sub1 = fig.add_subplot(221)
-    sub2 = fig.add_subplot(222)
-    sub3 = fig.add_subplot(223)
-    sub4 = fig.add_subplot(224)
+    # # Fuer die Darstellung der Puls Ergebnismatrix
+    # fig = plt.figure(figsize=(18, 9))
+    # fig.suptitle(file, fontsize=14, fontweight='bold')
+    # sub1 = fig.add_subplot(221)
+    # sub2 = fig.add_subplot(222)
+    # sub3 = fig.add_subplot(223)
+    # sub4 = fig.add_subplot(224)
 
     last_frame = video_frames[frame_count - 1]
     last_frame_clone = last_frame.copy()
@@ -101,54 +149,49 @@ def single_video_calculation(file, file_path, pulse_label_data):
 
 
             # Puls-Signal Extraction
-            bpm, fft, heart_rates, raw, H, green_avg = pos_based_method_improved(roi_time_series, fps)
+            bpm, pruned_fft, fft, heart_rates, raw, H, h, norm_channels, time_series = pos_based_method_improved(roi_time_series, fps)
 
-            sub1.text(x+w_steps/2, y+h_steps/2, round(bpm, 1), color=(0.0, 0.0, 0.0), fontsize=7, va='center', ha='center')
-            sub2.text(roi_ind_x, int(y/h_steps), round(bpm, 1), color=(0.745, 0.467, 0.294), fontsize=8, va='center', ha='center')
+            # sub1.text(x+w_steps/2, y+h_steps/2, round(bpm, 1), color=(0.0, 0.0, 0.0), fontsize=7, va='center', ha='center')
+            # sub2.text(roi_ind_x, int(y/h_steps), round(bpm, 1), color=(0.745, 0.467, 0.294), fontsize=8, va='center', ha='center')
             cv2.rectangle(last_frame_clone, (x, y), (x + w_steps, y + h_steps), (0, 0, 0), 2)
+            plot_results(bpm, pruned_fft, fft, heart_rates, raw=raw, overlap_signal=H, pulse_signal=h, norm_channels=norm_channels, time_series=time_series)
 
             bpm_values[roi_ind_y, roi_ind_x] = bpm
             skin_mat[roi_ind_y, roi_ind_x] = compare_pulse_vals(bpm, pulse_lower, pulse_upper)
+
 
     # check neighbouring rois
     bool_skin_mat = eliminate_weak_skin(skin_mat)
     # save_rois_with_label(bool_skin_mat, last_frame, height, width, h_steps, w_steps, file[:-4])
 
-    sub1.set_title('BPM on ROIs')
-    sub1.imshow(last_frame_clone)
-    sub2.set_title('BPM Matrix')
-    sub2.matshow(bpm_values, cmap=plt.cm.gray)
-    sub3.set_title('Skin, Non-Skin Matrix')
-    sub3.matshow(skin_mat, cmap=plt.cm.gray)
-    sub4.set_title('Skin, Neighbour reduced Matrix')
-    sub4.matshow(bool_skin_mat, cmap=plt.cm.gray)
+    # # Fuer die Darstellung der Puls Ergebnismatrix
+    # sub1.set_title('BPM on ROIs')
+    # sub1.imshow(last_frame_clone)
+    # sub2.set_title('BPM Matrix')
+    # sub2.matshow(bpm_values, cmap=plt.cm.gray)
+    # sub3.set_title('Skin, Non-Skin Matrix')
+    # sub3.matshow(skin_mat, cmap=plt.cm.gray)
+    # sub4.set_title('Skin, Neighbour reduced Matrix')
+    # sub4.matshow(bool_skin_mat, cmap=plt.cm.gray)
+    # plt.tight_layout()
+    # fig.savefig(file_path[:-4] + '.jpg')
+    # plt.close()
 
-    plt.tight_layout()
-    fig.savefig(file_path[:-4] + '.jpg')
-
-    plt.close()
     # plt.show()
-    # plot_results(fft, heart_rates, raw, hann_w, S, green_avg)
     print("--- Algorithm Completed %s seconds ---" % (time.time() - start_time))
 
 
 if __name__ == '__main__':
 
-
-    # input_dir_path = os.path.join('assets', 'Vid_Original')
-    input_dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
-    dest_dir_path = os.path.join('assets', 'Pulse_Data', '')
-    dest_skin_dir_path = os.path.join('assets', 'Skin_Label_Data', '')
-
-    file = '00128.MTS'
     file_path = os.path.join(input_dir_path, file)
 
     pulse_label_data = load_label_data()
     #
-    # # single_video_calculation(file, file_path, pulse_label_data)
+    single_video_calculation(file, file_path, pulse_label_data)
+
     # multi_video_calculation(input_dir_path, pulse_label_data)
 
-    skin_detection_algorithm_multi_video(input_dir_path, dest_skin_dir_path)
+    # skin_detection_algorithm_multi_video(input_dir_path, dest_skin_dir_path)
 
 
     print("--- %s seconds ---" % (time.time() - start_time))

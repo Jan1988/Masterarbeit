@@ -27,11 +27,6 @@ hidden_units = 50
 learning_rate = 1e-6
 clip_norm = 1.0
 
-#
-# (X_train_2, y_train_2), (X_test_2, y_test_2) = mnist.load_data()
-# X_train_2 = X_train_2.reshape(X_train_2.shape[0], -1, 1)
-# X_test_2 = X_test_2.reshape(X_test_2.shape[0], -1, 1)
-
 
 # the data, shuffled and split between train and test sets
 X_train, y_train, X_test, y_test = get_dataset(pulse_signal_dataset_path)
@@ -48,6 +43,8 @@ print(X_train.shape[0], 'train samples')
 print(X_test.shape[0], 'test samples')
 
 # convert class vectors to binary class matrices
+y_train = y_train.astype('uint8')
+y_test = y_test.astype('uint8')
 Y_train = np_utils.to_categorical(y_train)
 Y_test = np_utils.to_categorical(y_test)
 
@@ -61,9 +58,8 @@ model.add(SimpleRNN(output_dim=hidden_units,
 model.add(Dense(2))
 model.add(Activation('softmax'))
 rmsprop = RMSprop(lr=learning_rate)
-model.compile(loss='categorical_crossentropy',
-              optimizer=rmsprop,
-              metrics=['accuracy'])
+# model.compile(loss='categorical_crossentropy', optimizer=rmsprop, metrics=['accuracy'])
+model.compile(loss='binary_crossentropy', optimizer=rmsprop, metrics=['fmeasure', 'mean_squared_error'])
 
 model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epochs, verbose=1, validation_data=(X_test, Y_test))
 
