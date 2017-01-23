@@ -3,7 +3,8 @@ from __future__ import print_function
 import numpy as np
 import os
 
-from keras.datasets import mnist
+from Neural_Net.CNN_Tools import plot_filters
+
 from keras.models import Sequential
 from keras.layers import Dense, Activation
 from keras.layers import SimpleRNN
@@ -19,10 +20,10 @@ pulse_signal_dataset_path = os.path.join('assets', 'ROI_Full_Dataset.npy')
 # fix random seed for reproducibility
 np.random.seed(7)
 
-batch_size = 128
+batch_size = 32
 # nb_classes = 10
 nb_epochs = 500
-hidden_units = 50
+hidden_units = 100
 
 learning_rate = 1e-6
 clip_norm = 1.0
@@ -60,6 +61,8 @@ model.add(Activation('softmax'))
 rmsprop = RMSprop(lr=learning_rate)
 # model.compile(loss='categorical_crossentropy', optimizer=rmsprop, metrics=['accuracy'])
 model.compile(loss='binary_crossentropy', optimizer=rmsprop, metrics=['fmeasure', 'mean_squared_error'])
+
+print(model.get_config())
 
 model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epochs, verbose=1, validation_data=(X_test, Y_test))
 

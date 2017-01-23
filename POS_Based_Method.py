@@ -126,8 +126,8 @@ def pos_based_method_improved(_roi_time_series, _fps):
         m = n - window_size
 
     # Fourier Transform
-    raw = np.fft.fft(H, 512)
-    L = int(len(raw) / 2 + 1)
+    raw = np.fft.fft(H)
+    L = int(len(raw) / 2)
     fft = np.absolute(raw[:L])
 
     frequencies = np.linspace(0, _fps / 2, L, endpoint=True)

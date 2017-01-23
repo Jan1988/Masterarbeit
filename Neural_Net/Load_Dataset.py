@@ -5,6 +5,9 @@ from sklearn.cross_validation import train_test_split
 
 
 def get_dataset(_dataset_path):
+    # fix random seed for reproducibility
+    seed = 7
+    np.random.seed(seed)
 
     pulse_signal_dataset = np.load(_dataset_path)
 
@@ -13,11 +16,10 @@ def get_dataset(_dataset_path):
 
     # reshaped_signal_data = signal_data.reshape((pixel_count, 44, width, height))
 
-    # fix random seed for reproducibility
-    seed = 7
-    np.random.seed(seed)
+
 
     # split into 80% for train and 20% for test
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.20, random_state=seed)
+
 
     return X_train, y_train, X_test, y_test
