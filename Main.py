@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 
 from Video_Tools import load_video, get_video_dimensions
 from CHROM_Based_Method import chrom_based_pulse_signal_estimation
-from POS_Based_Method import pos_based_method_improved
+from POS_Based_Method import pos_based_method_improved, extract_pos_based_method_improved
 from Helper_Tools import load_label_data, get_pulse_vals_from_label_data, compare_pulse_vals, eliminate_weak_skin, \
     save_rois_with_label
 from Skin_Mask_Creation import skin_detection_algorithm_multi_video
@@ -18,7 +18,7 @@ input_dir_path_kue = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht'
 dest_dir_path = os.path.join('assets', 'Pulse_Data', '')
 dest_skin_dir_path = os.path.join('assets', 'Skin_Label_Data', '')
 
-file = '00100.MTS'
+
 
 
 def plot_results(bpm, fft2, fft1, heart_rates, raw=0, overlap_signal=0, pulse_signal=0, norm_channels=0, time_series=0):
@@ -38,7 +38,7 @@ def plot_results(bpm, fft2, fft1, heart_rates, raw=0, overlap_signal=0, pulse_si
 
     sub1.text(txt_coord_x, txt_coord_y, '(a)', fontsize=txt_fontsize, horizontalalignment='center',
               transform=sub1.transAxes)
-    # sub1.set_title('Normalisierte RGB-Kanäle', fontsize=subtitle_fontsize, loc='bottom')
+    # sub1.set_title('Normalized RGB-Channels', fontsize=subtitle_fontsize, loc='bottom')
     sub1.plot(norm_channels[:, 2], 'r',
               norm_channels[:, 1], 'g',
               norm_channels[:, 0], 'b')
@@ -112,8 +112,8 @@ def multi_video_calculation(dir_path, pulse_label_data):
 
 def single_video_calculation(file, file_path, pulse_label_data):
     start_time = time.time()
-    w_div = 16
-    h_div = 8
+    w_div = 64
+    h_div = 32
 
     skin_mat = np.zeros((h_div, w_div), dtype='float64')
     bpm_values = np.zeros((h_div, w_div), dtype='float64')
@@ -150,25 +150,28 @@ def single_video_calculation(file, file_path, pulse_label_data):
             roi_ind_y = int(y / roi_height)
 
             roi_time_series = video_frames[:, y:y + roi_height, x:x + roi_width]
+            # Spatial Averaging used when ROIs are extracted
+            time_series = np.mean(roi_time_series, axis=(1, 2))
 
-            # Puls-Signal Extraction
-            bpm, pruned_fft, fft, heart_rates, raw, H, h, norm_channels, time_series = pos_based_method_improved(
-                roi_time_series, fps)
+            # Pulse-Signal Extraction
+            bpm, pruned_fft, fft, heart_rates, raw, H, h, norm_channels, time_series = pos_based_method_improved(time_series, fps)
+            # bpm, pruned_fft = extract_pos_based_method_improved(time_series, fps)
 
-            sub1.text(x + roi_width / 2, y + roi_height / 2, round(bpm, 1), color=(0.0, 0.0, 0.0), fontsize=7,
+            sub1.text(x + roi_width / 2, y + roi_height / 2, round(bpm, 1), color=(0.0, 0.0, 0.0), fontsize=5,
                       va='center', ha='center')
-            sub2.text(roi_ind_x, roi_ind_y, round(bpm, 1), color=(0.745, 0.467, 0.294), fontsize=8, va='center',
+            sub2.text(roi_ind_x, roi_ind_y, round(bpm, 1), color=(0.745, 0.467, 0.294), fontsize=5, va='center',
                       ha='center')
             cv2.rectangle(last_frame_clone, (x, y), (x + roi_width, y + roi_height), (0, 0, 0), 2)
             # plot_results(bpm, pruned_fft, fft, heart_rates, raw=raw, overlap_signal=H, pulse_signal=h, norm_channels=norm_channels, time_series=time_series)
 
             bpm_values[roi_ind_y, roi_ind_x] = bpm
             skin_mat[roi_ind_y, roi_ind_x] = compare_pulse_vals(bpm, pulse_lower, pulse_upper)
+        print("Fortschritt: %.2f %%" % ((x+1.0) / width*100.0))
+
 
     # check neighbouring rois
     bool_skin_mat = eliminate_weak_skin(skin_mat)
     save_rois_with_label(bool_skin_mat, last_frame, height, width, roi_height, roi_width, file[:-4])
-
 
 
     # Fuer die Darstellung der Puls Ergebnismatrix
@@ -181,7 +184,7 @@ def single_video_calculation(file, file_path, pulse_label_data):
     sub4.set_title('Skin, Neighbour reduced Matrix')
     sub4.matshow(bool_skin_mat, cmap=plt.cm.gray)
     plt.tight_layout()
-    fig.savefig(file_path[:-4] + '.jpg')
+    fig.savefig(file_path[:-4] + '.png')
     plt.close()
 
     # plt.show()
@@ -189,12 +192,14 @@ def single_video_calculation(file, file_path, pulse_label_data):
 
 
 if __name__ == '__main__':
-    file_path = os.path.join(input_dir_path_nat, file)
+
+    file = '00132.MTS'
+    file_path = os.path.join(input_dir_path_kue, file)
     pulse_label_data = load_label_data()
 
-    # single_video_calculation(file, file_path, pulse_label_data)
+    single_video_calculation(file, file_path, pulse_label_data)
 
-    multi_video_calculation(input_dir_path_nat, pulse_label_data)
+    # multi_video_calculation(input_dir_path_kue, pulse_label_data)
 
     # skin_detection_algorithm_multi_video(input_dir_path, dest_skin_dir_path)
 

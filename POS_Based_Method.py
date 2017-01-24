@@ -84,11 +84,8 @@ def pos_based_method(video_frames, fps):
 
 
 # For BPM and plotting
-def pos_based_method_improved(_roi_time_series, _fps):
+def pos_based_method_improved(_time_series, _fps):
     # test = [[1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1]]
-
-    # Spatial Averaging
-    _time_series = np.mean(_roi_time_series, axis=(1, 2))
 
     # sliding window size
     window_size = 48
@@ -125,25 +122,22 @@ def pos_based_method_improved(_roi_time_series, _fps):
         n += 1
         m = n - window_size
 
-    # Fourier Transform
-    raw = np.fft.fft(H)
-    L = int(len(raw) / 2)
-    fft = np.absolute(raw[:L])
+    bpm, pruned_fft, heart_rates, fft, raw = get_bpm(H, _fps)
 
-    frequencies = np.linspace(0, _fps / 2, L, endpoint=True)
-    heart_rates = frequencies * 60
-
-    # bandpass filter for pulse
-    pruned_fft = fft.copy()
-    bound_low = (np.abs(heart_rates - 50)).argmin()
-    bound_high = (np.abs(heart_rates - 180)).argmin()
-    pruned_fft[:bound_low] = 0
-    pruned_fft[bound_high:] = 0
-
-    max_freq_pos = np.argmax(pruned_fft)
-
-    bpm = heart_rates[max_freq_pos]
-
+    # # Fourier Transform
+    # raw = np.fft.fft(H)
+    # L = int(len(raw) / 2)
+    # fft = np.absolute(raw[:L])
+    # frequencies = np.linspace(0, _fps / 2, L, endpoint=True)
+    # heart_rates = frequencies * 60
+    # # bandpass filter for pulse
+    # pruned_fft = fft.copy()
+    # bound_low = (np.abs(heart_rates - 50)).argmin()
+    # bound_high = (np.abs(heart_rates - 180)).argmin()
+    # pruned_fft[:bound_low] = 0
+    # pruned_fft[bound_high:] = 0
+    # max_freq_pos = np.argmax(pruned_fft)
+    # bpm = heart_rates[max_freq_pos]
 
     # print("4--- %s seconds ---" % (time.time() - func_time))
     # print(time.perf_counter())
@@ -163,15 +157,13 @@ def extract_pos_based_method_improved(_time_series, _fps):
 
     windows_counter = int(signal_length / window_size) * 2
 
-    H = np.zeros(signal_length, dtype='float64')
-
     n = window_size
     m = n - window_size
     for i in range(windows_counter):
 
         window = _time_series[m:n]
 
-        hann_windowed_signal = rgb_into_puls_signal(window, hann_window)
+        hann_windowed_signal = rgb_into_pulse_signal(window, hann_window)
 
         # Overlap-adding
         H[m:n] += hann_windowed_signal
@@ -179,35 +171,47 @@ def extract_pos_based_method_improved(_time_series, _fps):
         m = n - window_size
 
     # last window is splitted by half and added at the end and front of H
-    last_hann_windowed_s = rgb_into_puls_signal(_time_series[m:n], hann_window)
+    last_hann_windowed_signal = rgb_into_pulse_signal(_time_series[m:n], hann_window)
 
     # 1st half added at the back
-    H[-half_window_size:] += last_hann_windowed_s[:half_window_size]
+    H[-half_window_size:] += last_hann_windowed_signal[:half_window_size]
     # 2nd half added at the front
-    H[0:half_window_size] += last_hann_windowed_s[half_window_size:]
+    H[0:half_window_size] += last_hann_windowed_signal[half_window_size:]
 
+    bpm, pruned_fft, heart_rates, fft, raw = get_bpm(H, _fps)
+
+    return bpm, pruned_fft
+
+
+def get_bpm(_H, _fps):
     # Fourier Transform
-    raw = np.fft.fft(H, 512)
+    raw = np.fft.fft(_H, 512)
     L = int(len(raw) / 2 + 1)
-    fft1 = np.abs(raw[:L])
+    fft = np.abs(raw[:L])
 
-    frequencies = np.linspace(0, _fps / 2, L, endpoint=True)
+    frequencies = np.linspace(0, _fps/2, L, endpoint=True)
 
-    heart_rates = frequencies * 60
+    heart_rates = frequencies * 60.0
 
     # bandpass filter for pulse
+    bandpassed_fft = fft.copy()
     bound_low = (np.abs(heart_rates - 50)).argmin()
     bound_high = (np.abs(heart_rates - 180)).argmin()
-    fft1[:bound_low] = 0
-    fft1[bound_high:] = 0
 
-    # print("4--- %s seconds ---" % (time.time() - func_time))
-    # print(time.perf_counter())
-    return fft1[bound_low:bound_high]
-    # return bpm, fft1, heart_rates, raw, H, _time_series[m:n, 1]
+    pruned_fft = bandpassed_fft[bound_low:bound_high]
+
+    bandpassed_fft[:bound_low] = 0
+    bandpassed_fft[bound_high:] = 0
+
+    max_freq_pos = np.argmax(bandpassed_fft)
+
+    bpm = heart_rates[max_freq_pos]
 
 
-def rgb_into_puls_signal(_window, _hann_window):
+    return bpm, pruned_fft, heart_rates, fft, raw
+
+
+def rgb_into_pulse_signal(_window, _hann_window):
 
     # 5 temporal normalization
     mean_window = np.average(_window, axis=0)
@@ -228,5 +232,7 @@ def rgb_into_puls_signal(_window, _hann_window):
     # Hann window signal
     _hann_windowed_signal = _hann_window * h
 
-    return _hann_windowed_signal, h, norm_window
+    return _hann_windowed_signal
+    # # For plotting function
+    # return _hann_windowed_signal, h, norm_window
 

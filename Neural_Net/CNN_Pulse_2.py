@@ -9,20 +9,19 @@ from matplotlib import pyplot as plt
 import numpy as np
 np.random.seed(42)
 import tensorflow as tf
-tf.set_random_seed(42)
-
+tf.set_random_seed(7)
 
 from Neural_Net.Load_Dataset import get_dataset
 
-
-# pulse_signal_dataset_path = os.path.join('assets', 'Balanced_Data', 'Balanced_00130.npy')
-pulse_signal_dataset_path = os.path.join('assets', 'ROI_Full_Dataset.npy')
+pulse_signal_dataset_path = os.path.join('assets', 'Balanced_Data', 'Balanced_00130.npy')
+# pulse_signal_dataset_path = os.path.join('assets', 'ROI_Full_Dataset.npy')
+weights_path = os.path.join('assets', 'CNN_2_Best_Weights.hdf5')
 
 
 # input shape for tf: (rows, cols, channels)
 input_shape = (44, 1, 1)
-epochs = 20
-batch_size = 128
+epochs = 100
+batch_size = 256
 
 
 # the data, shuffled and split between train and test sets
@@ -62,37 +61,32 @@ print(y_test.shape)
 # see http://keras.io for API reference
 
 cnn = Sequential()
-
 # C1
-cnn.add(Convolution2D(5, 11, 1, border_mode="same", activation="relu", input_shape=input_shape))
+cnn.add(Convolution2D(5, 8, 1, border_mode="same", activation="relu", input_shape=input_shape))
 
 # S2
 cnn.add(MaxPooling2D(pool_size=(4, 1)))
-
 # C3
-cnn.add(Convolution2D(25, 9, 1, border_mode="same", activation="relu"))
-
+cnn.add(Convolution2D(25, 6, 1, border_mode="same", activation="relu"))
 # S4
 cnn.add(MaxPooling2D(pool_size=(4, 1)))
-
 # C5
-cnn.add(Convolution2D(125, 6, 1, border_mode="same", activation="relu"))
-
+cnn.add(Convolution2D(125, 5, 1, border_mode="same", activation="relu"))
+cnn.add(Dropout(0.5))
 # S6
 cnn.add(MaxPooling2D(pool_size=(2, 1)))
-
 # F7
 cnn.add(Flatten())
 cnn.add(Dense(500, activation="relu"))
-cnn.add(Dropout(0.5))
+cnn.add(Dropout(0.75))
 cnn.add(Dense(2, activation="softmax"))
 
 # define optimizer and objective, compile cnn
 cnn.compile(loss="binary_crossentropy", optimizer="adam",  metrics=['accuracy', 'fmeasure'])
 
 # checkpoint
-weights_file = "weights.best.hdf5"
-checkpoint = ModelCheckpoint(weights_file, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+
+checkpoint = ModelCheckpoint(weights_path, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
 callbacks_list = [checkpoint]
 
 cnn.summary()
@@ -129,3 +123,6 @@ plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
 plt.show()
+
+
+

@@ -103,7 +103,7 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
     w_steps = int(width / w_div)
     h_steps = int(height / h_div)
 
-    # Riesen-ndarray für puls-signale für breite*höhe eines Videos
+    # Giant-ndarray for pulse-signals for height*width of a Videos
     pulse_signal_data = np.zeros([h_div, w_div, 44], dtype='float64')
 
 
@@ -119,11 +119,43 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
             # Spatial Averaging
             roi_time_series_avg = np.mean(roi_time_series, axis=(1, 2))
 
-            puls_signal = extract_pos_based_method_improved(roi_time_series_avg, fps)
-
-            pulse_signal_data[roi_ind_y, roi_ind_x] = puls_signal
+            pulse_signal = extract_pos_based_method_improved(roi_time_series_avg, fps)
+            print(pulse_signal)
+            pulse_signal_data[roi_ind_y, roi_ind_x] = pulse_signal
 
         print("Fortschritt: %.1f %%" % ((x+1) / width*100))
+
+    print("--- Extr Finished %s seconds ---" % (time.time() - start_time))
+    # print(time.perf_counter())
+
+    out_file_path = os.path.join(out_dir, 'ROI_' + in_file[:-4] + '.npy')
+    print()
+    np.save(out_file_path, pulse_signal_data)
+
+
+# For every pixel
+def extr_single_video_calculation(in_file, in_file_path, out_dir):
+
+    video_frames, fps = load_video(in_file_path)
+    video_frames = video_frames[22:310]
+    frame_count, width, height = get_video_dimensions(video_frames)
+
+    # Giant-ndarray for pulse-signals for height*width of a Videos
+    pulse_signal_data = np.zeros([height, width, 44], dtype='float64')
+
+    for x in range(0, width):
+        for y in range(0, height):
+
+            px_time_series = video_frames[:, y, x]
+
+            bpm, pruned_fft = extract_pos_based_method_improved(px_time_series, fps)
+
+            pulse_signal_data[y, x] = pruned_fft
+
+        # print('Bildpunkt: ' + str(x))
+        print("Fortschritt: %.2f %%" % ((x+1.0) / width*100.0))
+
+    # reshaped_pulse_signal_data = _pulse_signal_data.reshape(height * width, _pulse_signal_data.shape[2])
 
     print("--- Extr Finished %s seconds ---" % (time.time() - start_time))
     # print(time.perf_counter())
@@ -132,48 +164,19 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
     np.save(out_file_path, pulse_signal_data)
 
 
-# For every pixel
-def extr_single_video_calculation(file, file_path):
-
-    video_frames, fps = load_video(file_path)
-    video_frames = video_frames[22:310]
-    frame_count, width, height = get_video_dimensions(video_frames)
-
-    # Riesen-ndarray für puls-signale für breite*höhe eines Videos
-    _pulse_signal_data = np.zeros([height, width, 44], dtype='float64')
-
-    for x in range(0, width):
-        for y in range(0, height):
-
-            px_time_series = video_frames[:, y, x]
-
-            puls_signal = extract_pos_based_method_improved(px_time_series, fps)
-
-            _pulse_signal_data[y, x] = puls_signal
-
-        # print('Bildpunkt: ' + str(x))
-        print("Fortschritt: %.1f %%" % ((x+1) / width*100))
-
-    # reshape to fit in .txt file
-    # reshaped_pulse_signal_data = _pulse_signal_data.reshape(height * width, _pulse_signal_data.shape[2])
-
-    print("--- Extr Finished %s seconds ---" % (time.time() - start_time))
-    # print(time.perf_counter())
-
-    return _pulse_signal_data
-
-
 if __name__ == '__main__':
 
     start_time = time.time()
-    file = '00163.MTS'
+    file = '00130.MTS'
     Pulse_data_dir = os.path.join('assets', 'Pulse_Data')
     video_dir = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
+    # video_dir = os.path.join('assets', 'Vid_Original', 'Natuerliches_Licht')
     video_file_path = os.path.join(video_dir, file)
 
     # pulse_signal_data = extr_single_video_calculation(file, file_path)
     # extr_roi_single_video_calculation(file, video_file_path, Pulse_data_dir)
-    extr_roi_multi_video_calculation(video_dir, Pulse_data_dir)
+    # extr_roi_multi_video_calculation(video_dir, Pulse_data_dir)
+    extr_single_video_calculation(file, video_file_path, Pulse_data_dir)
 
     print("--- Algorithm Completed %s seconds ---" % (time.time() - start_time))
 
