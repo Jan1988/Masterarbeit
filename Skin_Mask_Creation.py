@@ -116,11 +116,11 @@ def skin_detection_algorithm_single_video(_file, _dir_path, _dest_folder, show_f
     cv2.destroyAllWindows()
 
 
-def roi_skin_mask_multi_creation(in_dir, out_dir):
+def roi_skin_mask_multi_creation(in_dir, out_dir, show_figure=False):
 
     for file in os.listdir(in_dir):
         if file.endswith(".npy"):
-            roi_skin_mask_creation(file, in_dir, out_dir)
+            roi_skin_mask_creation(file, in_dir, out_dir, show_figure=show_figure)
 
 
 def roi_skin_mask_creation(_file, in_dir, out_dir, show_figure=False):
@@ -158,12 +158,11 @@ def roi_skin_mask_creation(_file, in_dir, out_dir, show_figure=False):
 
     fig = plt.figure(figsize=(17, 9))
     sub1 = fig.add_subplot(111)
-    sub1.set_title('roi_skin_mask')
+    sub1.set_title(roi_skin_mask_file_path)
     sub1.imshow(roi_skin_mask)
-    fig.savefig(roi_skin_mask_file_path[:-4] + '.jpg')
+    fig.savefig(roi_skin_mask_file_path[:-4] + '.png')
     if show_figure:
         plt.show()
-
 
 
     # Save it as .npy file
@@ -174,15 +173,15 @@ if __name__ == '__main__':
 
     # input_dir_path = os.path.join('assets', 'Vid_Original')
     input_dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
-    dest_dir_path = os.path.join('assets', 'Pulse_Data', '')
+    dest_dir_path = os.path.join('Neural_Net', 'assets', 'Skin_Label_Data', 'ROIs')
     skin_label_dir = os.path.join('assets', 'Skin_Label_Data')
     file = '00149.MTS'
     file_path = os.path.join(input_dir_path, file)
-    skin_mask_file = 'Skin_00163.npy'
+    skin_mask_file = 'Skin_00132.npy'
     skin_mask_file_path = os.path.join(skin_label_dir, skin_mask_file)
 
-    roi_skin_mask_multi_creation(skin_label_dir, skin_label_dir)
-    # roi_skin_mask_creation(skin_mask_file, skin_label_dir, skin_label_dir)
+    roi_skin_mask_multi_creation(skin_label_dir, dest_dir_path, show_figure=True)
+    # roi_skin_mask_creation(skin_mask_file, skin_label_dir, skin_label_dir, show_figure=True)
 
     # skin_detection_algorithm_multi_video(input_dir_path, dest_skin_dir_path)
     # skin_detection_algorithm_single_video(file, input_dir_path, skin_label_dir)

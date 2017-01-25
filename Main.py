@@ -154,13 +154,13 @@ def single_video_calculation(file, file_path, pulse_label_data):
             time_series = np.mean(roi_time_series, axis=(1, 2))
 
             # Pulse-Signal Extraction
-            bpm, pruned_fft, fft, heart_rates, raw, H, h, norm_channels, time_series = pos_based_method_improved(time_series, fps)
-            # bpm, pruned_fft = extract_pos_based_method_improved(time_series, fps)
+            # bpm, pruned_fft, fft, heart_rates, raw, H, h, norm_channels, time_series = pos_based_method_improved(time_series, fps)
+            bpm, pruned_fft = extract_pos_based_method_improved(time_series, fps)
 
             sub1.text(x + roi_width / 2, y + roi_height / 2, round(bpm, 1), color=(0.0, 0.0, 0.0), fontsize=5,
                       va='center', ha='center')
-            sub2.text(roi_ind_x, roi_ind_y, round(bpm, 1), color=(0.745, 0.467, 0.294), fontsize=5, va='center',
-                      ha='center')
+            # sub2.text(roi_ind_x, roi_ind_y, round(bpm, 1), color=(0.745, 0.467, 0.294), fontsize=5, va='center',
+            #           ha='center')
             cv2.rectangle(last_frame_clone, (x, y), (x + roi_width, y + roi_height), (0, 0, 0), 2)
             # plot_results(bpm, pruned_fft, fft, heart_rates, raw=raw, overlap_signal=H, pulse_signal=h, norm_channels=norm_channels, time_series=time_series)
 
@@ -171,8 +171,7 @@ def single_video_calculation(file, file_path, pulse_label_data):
 
     # check neighbouring rois
     bool_skin_mat = eliminate_weak_skin(skin_mat)
-    save_rois_with_label(bool_skin_mat, last_frame, height, width, roi_height, roi_width, file[:-4])
-
+    # save_rois_with_label(bool_skin_mat, last_frame, height, width, roi_height, roi_width, file[:-4])
 
     # Fuer die Darstellung der Puls Ergebnismatrix
     sub1.set_title('BPM on ROIs')
@@ -188,7 +187,7 @@ def single_video_calculation(file, file_path, pulse_label_data):
     plt.close()
 
     # plt.show()
-    print("--- Algorithm Completed %s seconds ---" % (time.time() - start_time))
+
 
 
 if __name__ == '__main__':
@@ -197,11 +196,11 @@ if __name__ == '__main__':
     file_path = os.path.join(input_dir_path_kue, file)
     pulse_label_data = load_label_data()
 
-    single_video_calculation(file, file_path, pulse_label_data)
+    # single_video_calculation(file, file_path, pulse_label_data)
 
-    # multi_video_calculation(input_dir_path_kue, pulse_label_data)
+    multi_video_calculation(input_dir_path_kue, pulse_label_data)
 
     # skin_detection_algorithm_multi_video(input_dir_path, dest_skin_dir_path)
 
 
-    print("--- %s seconds ---" % (time.time() - start_time))
+    print("--- Algorithm Completed %s seconds ---" % (time.time() - start_time))

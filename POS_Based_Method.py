@@ -189,7 +189,7 @@ def get_bpm(_H, _fps):
     L = int(len(raw) / 2 + 1)
     fft = np.abs(raw[:L])
 
-    frequencies = np.linspace(0, _fps/2, L, endpoint=True)
+    frequencies = np.linspace(0, _fps/2.0, L, endpoint=True)
 
     heart_rates = frequencies * 60.0
 

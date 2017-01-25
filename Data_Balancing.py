@@ -4,16 +4,16 @@ from random import randrange
 import sklearn
 
 
-# def multi_npy_data_balancing(_signal_data_dir, _skin_mask_data_dir, _out_balanced_dir):
-    # for file in os.listdir(_signal_data_dir):
-        # skin_mask_data_file_path = os.path.join(skin_mask_data_dir, 'Skin_' + file)
-        # skin_mask_data_file_path = os.path.join(_skin_mask_data_dir, 'ROI_Skin_' + file[4:])
-        # skin_mask_exists = os.path.isfile(roi_skin_mask_data_file_path)
+balanced_data_count = 0
 
-        # print(file)
-        # print('Skin mask exists: ' + str(skin_mask_exists))
-        # if file.endswith(".npy") and skin_mask_exists:
-        #     single_npy_data_balancing(file, _signal_data_dir, out_balanced_signal_data, skin_mask_data_file_path)
+def multi_npy_data_balancing(_signal_data_dir, _skin_mask_data_dir, _out_balanced_dir):
+    for file in os.listdir(_signal_data_dir):
+
+        if file.endswith(".npy"):
+            _signal_file_path = os.path.join(_signal_data_dir, file)
+            _skin_mask_file_path = os.path.join(_skin_mask_data_dir, 'ROI_Skin_' + file[4:])
+
+            single_npy_data_balancing(file, _signal_file_path, _skin_mask_file_path, _out_balanced_dir)
 
 
 def single_npy_data_balancing(_signal_file, _signal_file_path, _skin_mask_file_path, _out_balanced_dir):
@@ -66,24 +66,29 @@ def single_npy_data_balancing(_signal_file, _signal_file_path, _skin_mask_file_p
     print('Saving: ' + out_file_path)
     np.save(out_file_path, balanced_signal_data)
 
-
+    global balanced_data_count
+    balanced_data_count += balanced_signal_data.shape[0]
 
 
 if __name__ == '__main__':
 
-    signal_file = '00130.npy'
-    skin_mask_file = 'Skin_00130.npy'
+    signal_file = 'ROI_00132.npy'
+    skin_mask_file = 'ROI_Skin_00132.npy'
 
     signal_data_dir = os.path.join('Neural_Net', 'assets', 'Pulse_Data')
     roi_signal_data_dir = os.path.join('Neural_Net', 'assets', 'Pulse_Data', 'ROIs')
-    signal_file_path = os.path.join(signal_data_dir, signal_file)
-
     skin_mask_data_dir = os.path.join('Neural_Net', 'assets', 'Skin_Label_Data')
     roi_skin_mask_data_dir = os.path.join('Neural_Net', 'assets', 'Skin_Label_Data', 'ROIs')
-    skin_mask_file_path = os.path.join(skin_mask_data_dir, skin_mask_file)
-
     out_balanced_dir = os.path.join('Neural_Net', 'assets', 'Balanced_Data')
     out_roi_balanced_dir = os.path.join('Neural_Net', 'assets', 'Balanced_Data', 'ROIs')
 
-    # multi_npy_data_balancing(roi_signal_data_dir, roi_skin_mask_data_dir, out_roi_balanced_dir)
-    single_npy_data_balancing(signal_file, signal_file_path, skin_mask_file_path, out_balanced_dir)
+    #
+    signal_file_path = os.path.join(roi_signal_data_dir, signal_file)
+    skin_mask_file_path = os.path.join(roi_skin_mask_data_dir, skin_mask_file)
+
+    #
+    multi_npy_data_balancing(roi_signal_data_dir, roi_skin_mask_data_dir, out_roi_balanced_dir)
+    # single_npy_data_balancing(signal_file, signal_file_path, skin_mask_file_path, out_balanced_dir)
+    global balanced_data_count
+
+    print('Total samples balanced: ' + str(balanced_data_count))

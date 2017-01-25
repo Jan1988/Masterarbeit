@@ -11,16 +11,6 @@ from Helper_Tools import load_label_data, get_pulse_vals_from_label_data, compar
     save_rois_with_label
 
 
-def extr_roi_multi_video_calculation(in_dir, out_dir):
-
-    for file in os.listdir(in_dir):
-        in_file_path = os.path.join(in_dir, file)
-
-        if file.endswith(".MTS"):
-            extr_roi_single_video_calculation(file, in_file_path, out_dir)
-
-
-
 # Old
 def extr_pos_based_method(time_series, fps):
 
@@ -91,6 +81,15 @@ def extr_pos_based_method(time_series, fps):
     return bpm, fft1, heart_rates, raw, H
 
 
+def extr_roi_multi_video_calculation(in_dir, out_dir):
+
+    for file in os.listdir(in_dir):
+        in_file_path = os.path.join(in_dir, file)
+
+        if file.endswith(".MTS"):
+            extr_roi_single_video_calculation(file, in_file_path, out_dir)
+
+
 # For ROI
 def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
 
@@ -105,7 +104,7 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
 
     # Giant-ndarray for pulse-signals for height*width of a Videos
     pulse_signal_data = np.zeros([h_div, w_div, 44], dtype='float64')
-
+    bpm_values = np.zeros((h_div, w_div), dtype='float64')
 
     # Hier wird der ungeradere Rest abgeschnitten
     width = w_steps * w_div
@@ -119,17 +118,23 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
             # Spatial Averaging
             roi_time_series_avg = np.mean(roi_time_series, axis=(1, 2))
 
-            pulse_signal = extract_pos_based_method_improved(roi_time_series_avg, fps)
-            print(pulse_signal)
-            pulse_signal_data[roi_ind_y, roi_ind_x] = pulse_signal
+            bpm, pruned_fft = extract_pos_based_method_improved(roi_time_series_avg, fps)
 
-        print("Fortschritt: %.1f %%" % ((x+1) / width*100))
+            # for validating if extr method is the same as main method
+            bpm_values[roi_ind_y, roi_ind_x] = bpm
+
+            pulse_signal_data[roi_ind_y, roi_ind_x] = pruned_fft
+
+        print("Fortschritt: %.2f %%" % ((x+1) / width*100.0))
 
     print("--- Extr Finished %s seconds ---" % (time.time() - start_time))
     # print(time.perf_counter())
 
+    # plt.matshow(bpm_values, cmap=plt.cm.gray)
+    # plt.suptitle('File: ' + in_file)
+    # plt.show()
+
     out_file_path = os.path.join(out_dir, 'ROI_' + in_file[:-4] + '.npy')
-    print()
     np.save(out_file_path, pulse_signal_data)
 
 
@@ -173,10 +178,11 @@ if __name__ == '__main__':
     # video_dir = os.path.join('assets', 'Vid_Original', 'Natuerliches_Licht')
     video_file_path = os.path.join(video_dir, file)
 
-    # pulse_signal_data = extr_single_video_calculation(file, file_path)
-    # extr_roi_single_video_calculation(file, video_file_path, Pulse_data_dir)
-    # extr_roi_multi_video_calculation(video_dir, Pulse_data_dir)
     extr_single_video_calculation(file, video_file_path, Pulse_data_dir)
 
+    # extr_roi_multi_video_calculation(video_dir, Pulse_data_dir)
+    # extr_roi_single_video_calculation(file, video_file_path, Pulse_data_dir)
+
     print("--- Algorithm Completed %s seconds ---" % (time.time() - start_time))
+
 
