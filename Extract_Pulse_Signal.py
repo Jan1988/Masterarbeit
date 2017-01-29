@@ -2,6 +2,7 @@
 import os
 import time
 import numpy as np
+import scipy.misc
 
 from matplotlib import pyplot as plt
 
@@ -81,13 +82,17 @@ def extr_pos_based_method(time_series, fps):
     return bpm, fft1, heart_rates, raw, H
 
 
-def extr_roi_multi_video_calculation(in_dir, out_dir):
-
+def extr_multi_video_calculation(in_dir, out_dir, roi=False):
     for file in os.listdir(in_dir):
         in_file_path = os.path.join(in_dir, file)
 
         if file.endswith(".MTS"):
-            extr_roi_single_video_calculation(file, in_file_path, out_dir)
+            if roi:
+                print('ROI Calculation')
+                extr_roi_single_video_calculation(file, in_file_path, out_dir)
+            else:
+                print('Per Pixel Calculation')
+                extr_single_video_calculation(file, in_file_path, out_dir)
 
 
 # For ROI
@@ -147,6 +152,11 @@ def extr_single_video_calculation(in_file, in_file_path, out_dir):
 
     # Giant-ndarray for pulse-signals for height*width of a Videos
     pulse_signal_data = np.zeros([height, width, 44], dtype='float64')
+    # Only for visualizing
+    bpm_map = np.zeros([height, width], dtype='float64')
+    video_frames = video_frames.astype('float32')
+    video_frames += 1.0
+
 
     for x in range(0, width):
         for y in range(0, height):
@@ -155,24 +165,29 @@ def extr_single_video_calculation(in_file, in_file_path, out_dir):
 
             bpm, pruned_fft = extract_pos_based_method_improved(px_time_series, fps)
 
+            bpm_map[y, x] = bpm
             pulse_signal_data[y, x] = pruned_fft
 
         # print('Bildpunkt: ' + str(x))
         print("Fortschritt: %.2f %%" % ((x+1.0) / width*100.0))
 
+
     # reshaped_pulse_signal_data = _pulse_signal_data.reshape(height * width, _pulse_signal_data.shape[2])
-
     print("--- Extr Finished %s seconds ---" % (time.time() - start_time))
-    # print(time.perf_counter())
 
-    out_file_path = os.path.join(out_dir, 'ROI_' + in_file[:-4] + '.npy')
+    out_file_path = os.path.join(out_dir, in_file[:-4] + '.npy')
+
+    scipy.misc.imsave(out_file_path[:-4] + '.png', bpm_map)
+    # plt.matshow(bpm_map, cmap=plt.cm.gray)
+    # plt.show()
     np.save(out_file_path, pulse_signal_data)
+    print('Saved to ' + out_file_path)
 
 
 if __name__ == '__main__':
 
     start_time = time.time()
-    file = '00130.MTS'
+    file = '00132.MTS'
     Pulse_data_dir = os.path.join('assets', 'Pulse_Data')
     video_dir = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
     # video_dir = os.path.join('assets', 'Vid_Original', 'Natuerliches_Licht')
@@ -180,7 +195,8 @@ if __name__ == '__main__':
 
     extr_single_video_calculation(file, video_file_path, Pulse_data_dir)
 
-    # extr_roi_multi_video_calculation(video_dir, Pulse_data_dir)
+    # extr_multi_video_calculation(video_dir, Pulse_data_dir, roi=False)
+
     # extr_roi_single_video_calculation(file, video_file_path, Pulse_data_dir)
 
     print("--- Algorithm Completed %s seconds ---" % (time.time() - start_time))

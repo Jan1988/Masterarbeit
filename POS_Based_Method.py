@@ -149,13 +149,13 @@ def extract_pos_based_method_improved(_time_series, _fps):
 
     # sliding window size
     window_size = 48
-    half_window_size = int(window_size / 2)
     hann_window = np.hanning(window_size)
-
-    signal_length = len(_time_series)-half_window_size
+    overlap = 24
+    signal_length = len(_time_series)-overlap
     H = np.zeros(signal_length, dtype='float64')
 
-    windows_counter = int(signal_length / window_size) * 2
+    windows_counter = int((len(_time_series) - window_size) / overlap)
+    # windows_counter = int(signal_length / window_size) * 2
 
     n = window_size
     m = n - window_size
@@ -167,16 +167,16 @@ def extract_pos_based_method_improved(_time_series, _fps):
 
         # Overlap-adding
         H[m:n] += hann_windowed_signal
-        n += half_window_size
+        n += overlap
         m = n - window_size
 
     # last window is splitted by half and added at the end and front of H
     last_hann_windowed_signal = rgb_into_pulse_signal(_time_series[m:n], hann_window)
 
     # 1st half added at the back
-    H[-half_window_size:] += last_hann_windowed_signal[:half_window_size]
+    H[-overlap:] += last_hann_windowed_signal[:overlap]
     # 2nd half added at the front
-    H[0:half_window_size] += last_hann_windowed_signal[half_window_size:]
+    H[0:overlap] += last_hann_windowed_signal[overlap:]
 
     bpm, pruned_fft, heart_rates, fft, raw = get_bpm(H, _fps)
 
@@ -184,6 +184,8 @@ def extract_pos_based_method_improved(_time_series, _fps):
 
 
 def get_bpm(_H, _fps):
+
+
     # Fourier Transform
     raw = np.fft.fft(_H, 512)
     L = int(len(raw) / 2 + 1)
@@ -216,6 +218,9 @@ def rgb_into_pulse_signal(_window, _hann_window):
     # 5 temporal normalization
     mean_window = np.average(_window, axis=0)
     norm_window = _window / mean_window
+
+    if np.isnan(norm_window).any():
+        print('nan')
 
     # 6 projection
     S1 = np.dot(norm_window, [-1, 1, 0])

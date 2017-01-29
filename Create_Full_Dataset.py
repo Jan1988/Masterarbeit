@@ -22,7 +22,7 @@ def create_full_dataset(_balanced_data_dir, _out_full_dataset_path):
             print('Full Shape ' + str(full_dataset.shape))
 
     np.save(_out_full_dataset_path, full_dataset)
-
+    print('Saving ' + _out_full_dataset_path)
 
 if __name__ == '__main__':
 
