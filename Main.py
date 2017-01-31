@@ -20,7 +20,7 @@ dest_skin_dir_path = os.path.join('assets', 'Skin_Label_Data', '')
 
 
 
-
+# Plot for Thesis Image
 def plot_results(bpm, fft2, fft1, heart_rates, raw=0, overlap_signal=0, pulse_signal=0, norm_channels=0, time_series=0):
     # plt.axis([0, n, y_lower, y_upper])
     tick_fontsize = 7

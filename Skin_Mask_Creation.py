@@ -125,11 +125,11 @@ def roi_skin_mask_multi_creation(in_dir, out_dir, show_figure=False):
 
 def roi_skin_mask_creation(_file, in_dir, out_dir, show_figure=False):
 
-    skin_mask_file_path = os.path.join(in_dir, _file)
+    full_skin_mask_file_path = os.path.join(in_dir, _file)
 
-    w_div = 64
-    h_div = 32
-    skin_mask = np.load(skin_mask_file_path)
+    w_div = 16
+    h_div = 8
+    skin_mask = np.load(full_skin_mask_file_path)
     height, width = skin_mask.shape
     w_steps = int(width / w_div)
     h_steps = int(height / h_div)
@@ -154,12 +154,17 @@ def roi_skin_mask_creation(_file, in_dir, out_dir, show_figure=False):
     roi_skin_mask[skin_ind] = 1.0
     roi_skin_mask[non_skin_ind] = 0.0
 
-    roi_skin_mask_file_path = os.path.join(out_dir, 'ROI_' + _file)
+    roi_dir = os.path.join(out_dir, 'Skin_Masks_' + str(h_div) + 'x' + str(w_div))
+    if not os.path.exists(roi_dir):
+        os.makedirs(roi_dir)
+
+    roi_skin_mask_file_path = os.path.join(roi_dir, 'Skin_' + str(h_div) + 'x' + str(w_div) + _file[4:])
 
     fig = plt.figure(figsize=(17, 9))
     sub1 = fig.add_subplot(111)
     sub1.set_title(roi_skin_mask_file_path)
     sub1.imshow(roi_skin_mask)
+
     fig.savefig(roi_skin_mask_file_path[:-4] + '.png')
     if show_figure:
         plt.show()
@@ -173,7 +178,8 @@ if __name__ == '__main__':
 
     # input_dir_path = os.path.join('assets', 'Vid_Original')
     input_dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
-    dest_dir_path = os.path.join('Neural_Net', 'assets', 'Skin_Label_Data', 'ROIs')
+    # dest_dir_path = os.path.join('Neural_Net', 'assets', 'Skin_Label_Data')
+    dest_dir_path = os.path.join('assets', 'Skin_Label_Data')
     skin_label_dir = os.path.join('assets', 'Skin_Label_Data')
     file = '00149.MTS'
     file_path = os.path.join(input_dir_path, file)

@@ -197,7 +197,7 @@ def get_bpm(_H, _fps):
 
     # bandpass filter for pulse
     bandpassed_fft = fft.copy()
-    bound_low = (np.abs(heart_rates - 50)).argmin()
+    bound_low = (np.abs(heart_rates - 45)).argmin()
     bound_high = (np.abs(heart_rates - 180)).argmin()
 
     pruned_fft = bandpassed_fft[bound_low:bound_high]
@@ -214,6 +214,10 @@ def get_bpm(_H, _fps):
 
 
 def rgb_into_pulse_signal(_window, _hann_window):
+
+    # Make float64 Array and add 1.0 to avoid means that are zero
+    _window = _window.astype('float64')
+    _window += 1.0
 
     # 5 temporal normalization
     mean_window = np.average(_window, axis=0)

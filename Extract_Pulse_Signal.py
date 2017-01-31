@@ -1,6 +1,8 @@
 
 import os
 import time
+
+import cv2
 import numpy as np
 import scipy.misc
 
@@ -9,7 +11,55 @@ from matplotlib import pyplot as plt
 from Video_Tools import load_video, get_video_dimensions
 from POS_Based_Method import pos_based_method, extract_pos_based_method_improved
 from Helper_Tools import load_label_data, get_pulse_vals_from_label_data, compare_pulse_vals, eliminate_weak_skin, \
-    save_rois_with_label
+    compare_with_skin_mask
+
+true_positives = 0
+false_positives = 0
+false_negatives = 0
+true_negatives = 0
+
+
+# Plot for Thesis Image Pixelwise
+def plot_and_save_results(_plot_title, _last_frame_clone, _bpm_map, _weak_skin_map, _strong_skin_map, save_to):
+
+    fig = plt.figure(figsize=(19, 15))
+    fig.suptitle(_plot_title, fontsize=20, fontweight='bold')
+    tick_fontsize = 11
+    txt_coord_x = 0.05
+    txt_coord_y = 0.9
+    txt_fontsize = 21
+
+    sub1 = fig.add_subplot(221)
+    sub2 = fig.add_subplot(222)
+    sub3 = fig.add_subplot(223)
+    sub4 = fig.add_subplot(224)
+
+    sub1.text(txt_coord_x, txt_coord_y, '(a)', fontsize=txt_fontsize, horizontalalignment='center',
+              transform=sub1.transAxes)
+    sub1.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    sub1.imshow(_last_frame_clone)
+
+    sub2.text(txt_coord_x, txt_coord_y, '(b)', color='white', fontsize=txt_fontsize, horizontalalignment='center',
+              transform=sub2.transAxes)
+    sub2.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    sub2.matshow(_bpm_map, cmap=plt.cm.gray)
+
+    sub3.text(txt_coord_x, txt_coord_y, '(c)', color='white', fontsize=txt_fontsize, horizontalalignment='center',
+              transform=sub3.transAxes)
+    sub3.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    sub3.matshow(_weak_skin_map, cmap=plt.cm.gray)
+
+    sub4.text(txt_coord_x, txt_coord_y, '(d)', color='white', fontsize=txt_fontsize, horizontalalignment='center',
+              transform=sub4.transAxes)
+    sub4.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    sub4.matshow(_strong_skin_map, cmap=plt.cm.gray)
+
+    plt.tight_layout()
+    # plt.show()
+
+    fig.savefig(save_to + '.png')
+    plt.close()
+    # scipy.misc.imsave(out_file_path[:-4] + '.png', bpm_map)
 
 
 # Old
@@ -88,18 +138,18 @@ def extr_multi_video_calculation(in_dir, out_dir, roi=False):
 
         if file.endswith(".MTS"):
             if roi:
-                print('ROI Calculation')
+                print('This is a ROI Calculation')
                 extr_roi_single_video_calculation(file, in_file_path, out_dir)
             else:
-                print('Per Pixel Calculation')
+                print('This is a Pixelwise Calculation')
                 extr_single_video_calculation(file, in_file_path, out_dir)
 
 
 # For ROI
 def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
 
-    w_div = 64
-    h_div = 32
+    w_div = 16
+    h_div = 8
 
     video_frames, fps = load_video(in_file_path)
     video_frames = video_frames[22:310]
@@ -108,8 +158,29 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
     h_steps = int(height / h_div)
 
     # Giant-ndarray for pulse-signals for height*width of a Videos
-    pulse_signal_data = np.zeros([h_div, w_div, 44], dtype='float64')
-    bpm_values = np.zeros((h_div, w_div), dtype='float64')
+    pulse_signal_data = np.zeros([h_div, w_div, 46], dtype='float64')
+    bpm_map = np.zeros((h_div, w_div), dtype='float64')
+
+    # Load all pulse value belonging to a certain video in array
+    pulse_lower, pulse_upper = get_pulse_vals_from_label_data(load_label_data(), in_file)
+
+    # Fuer die Darstellung der Puls Ergebnismatrix
+    plot_title = file + ' BPM: ' + str(pulse_lower) + '-' + str(pulse_upper)
+    fig = plt.figure(figsize=(20, 15))
+    fig.suptitle(plot_title, fontsize=20, fontweight='bold')
+    tick_fontsize = 11
+    txt_coord_x = 0.05
+    txt_coord_y = 0.9
+    txt_fontsize = 21
+
+    sub1 = fig.add_subplot(231)
+    sub2 = fig.add_subplot(232)
+    sub3 = fig.add_subplot(233)
+    sub4 = fig.add_subplot(234)
+
+    last_frame = video_frames[frame_count - 1]
+    last_frame_clone = last_frame.copy()
+
 
     # Hier wird der ungeradere Rest abgeschnitten
     width = w_steps * w_div
@@ -126,21 +197,58 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
             bpm, pruned_fft = extract_pos_based_method_improved(roi_time_series_avg, fps)
 
             # for validating if extr method is the same as main method
-            bpm_values[roi_ind_y, roi_ind_x] = bpm
+            bpm_map[roi_ind_y, roi_ind_x] = bpm
 
             pulse_signal_data[roi_ind_y, roi_ind_x] = pruned_fft
 
-        print("Fortschritt: %.2f %%" % ((x+1) / width*100.0))
+            # Fuer die Darstellung der Puls Ergebnismatrix
+            sub1.text(x + w_steps / 2, y + h_steps / 2, round(bpm, 1), color=(0.0, 0.0, 0.0), fontsize=7, va='center', ha='center')
+            cv2.rectangle(last_frame_clone, (x, y), (x + w_steps, y + h_steps), (0, 0, 0), 2)
 
-    print("--- Extr Finished %s seconds ---" % (time.time() - start_time))
-    # print(time.perf_counter())
+        print("Fortschritt: %.2f %%" % ((x + 1.0) / width * 100.0))
 
-    # plt.matshow(bpm_values, cmap=plt.cm.gray)
-    # plt.suptitle('File: ' + in_file)
+    # check neighbouring BPMs
+    weak_skin_map = compare_pulse_vals(bpm_map, pulse_lower, pulse_upper)
+    strong_skin_map = eliminate_weak_skin(weak_skin_map, skin_neighbors=3)
+
+    out_file_path = os.path.join(out_dir, 'no_nan_ROI_' + in_file[:-4])
+
+    # Fuer die Darstellung der Puls Ergebnismatrix
+    sub1.text(txt_coord_x, txt_coord_y, '(a)', color='white', fontsize=txt_fontsize, horizontalalignment='center',
+              transform=sub1.transAxes)
+    sub1.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    sub1.imshow(last_frame_clone)
+    sub2.text(txt_coord_x, txt_coord_y, '(b)', color='white', fontsize=txt_fontsize, horizontalalignment='center',
+              transform=sub2.transAxes)
+    sub2.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    sub2.matshow(bpm_map, cmap=plt.cm.gray)
+    sub3.text(txt_coord_x, txt_coord_y, '(c)', color='white', fontsize=txt_fontsize, horizontalalignment='center',
+              transform=sub3.transAxes)
+    sub3.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    sub3.matshow(weak_skin_map, cmap=plt.cm.gray)
+    sub4.text(txt_coord_x, txt_coord_y, '(d)', color='white', fontsize=txt_fontsize, horizontalalignment='center',
+              transform=sub4.transAxes)
+    sub4.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    sub4.matshow(strong_skin_map, cmap=plt.cm.gray)
+
+    plt.tight_layout()
     # plt.show()
+    # fig.savefig(out_file_path + '.png')
+    plt.close()
 
-    out_file_path = os.path.join(out_dir, 'ROI_' + in_file[:-4] + '.npy')
-    np.save(out_file_path, pulse_signal_data)
+    # POS Metrics measure
+    vid_true_positives, vid_false_positives, vid_false_negatives, vid_true_negatives = compare_with_skin_mask(file, weak_skin_map, h_div, w_div)
+    global true_positives
+    global false_positives
+    global false_negatives
+    global true_negatives
+    true_positives += vid_true_positives
+    false_positives += vid_false_positives
+    false_negatives += vid_false_negatives
+    true_negatives += vid_true_negatives
+
+    # np.save(out_file_path, pulse_signal_data)
+    print('Saved to ' + out_file_path)
 
 
 # For every pixel
@@ -150,13 +258,21 @@ def extr_single_video_calculation(in_file, in_file_path, out_dir):
     video_frames = video_frames[22:310]
     frame_count, width, height = get_video_dimensions(video_frames)
 
+
     # Giant-ndarray for pulse-signals for height*width of a Videos
     pulse_signal_data = np.zeros([height, width, 44], dtype='float64')
     # Only for visualizing
-    bpm_map = np.zeros([height, width], dtype='float64')
-    video_frames = video_frames.astype('float32')
-    video_frames += 1.0
+    bpm_map = np.zeros([height, width], dtype='float16')
 
+    # # Do this on server
+    # video_frames = video_frames.astype('float32')
+    # video_frames += 1.0
+
+    # Fuer die Darstellung der Puls Ergebnismatrix
+    last_frame = video_frames[frame_count - 1]
+    last_frame_clone = last_frame.copy()
+    # Load all pulse value belonging to a certain video in array
+    pulse_lower, pulse_upper = get_pulse_vals_from_label_data(load_label_data(), in_file)
 
     for x in range(0, width):
         for y in range(0, height):
@@ -165,21 +281,22 @@ def extr_single_video_calculation(in_file, in_file_path, out_dir):
 
             bpm, pruned_fft = extract_pos_based_method_improved(px_time_series, fps)
 
-            bpm_map[y, x] = bpm
             pulse_signal_data[y, x] = pruned_fft
 
-        # print('Bildpunkt: ' + str(x))
-        print("Fortschritt: %.2f %%" % ((x+1.0) / width*100.0))
+            bpm_map[y, x] = bpm
 
+        print("Fortschritt: %.2f %%" % ((x + 1.0) / width * 100.0))
 
-    # reshaped_pulse_signal_data = _pulse_signal_data.reshape(height * width, _pulse_signal_data.shape[2])
-    print("--- Extr Finished %s seconds ---" % (time.time() - start_time))
+    # check neighbouring BPMs
+    weak_skin_map = compare_pulse_vals(bpm_map, pulse_lower, pulse_upper)
+    strong_skin_map = eliminate_weak_skin(weak_skin_map, skin_neighbors=5)
 
-    out_file_path = os.path.join(out_dir, in_file[:-4] + '.npy')
+    out_file_path = os.path.join(out_dir, 'no_nan_' + in_file[:-4])
 
-    scipy.misc.imsave(out_file_path[:-4] + '.png', bpm_map)
-    # plt.matshow(bpm_map, cmap=plt.cm.gray)
-    # plt.show()
+    # Fuer die Darstellung der Puls Ergebnismatrix
+    plot_title = in_file + ' BPM: ' + str(pulse_lower) + '-' + str(pulse_upper)
+    plot_and_save_results(plot_title, last_frame_clone, bpm_map, weak_skin_map, strong_skin_map, out_file_path)
+
     np.save(out_file_path, pulse_signal_data)
     print('Saved to ' + out_file_path)
 
@@ -187,18 +304,21 @@ def extr_single_video_calculation(in_file, in_file_path, out_dir):
 if __name__ == '__main__':
 
     start_time = time.time()
-    file = '00132.MTS'
+    file = '00163.MTS'
     Pulse_data_dir = os.path.join('assets', 'Pulse_Data')
     video_dir = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
     # video_dir = os.path.join('assets', 'Vid_Original', 'Natuerliches_Licht')
     video_file_path = os.path.join(video_dir, file)
 
-    extr_single_video_calculation(file, video_file_path, Pulse_data_dir)
 
+    # extr_single_video_calculation(file, video_file_path, Pulse_data_dir)
+
+    extr_multi_video_calculation(video_dir, Pulse_data_dir, roi=True)
     # extr_multi_video_calculation(video_dir, Pulse_data_dir, roi=False)
 
     # extr_roi_single_video_calculation(file, video_file_path, Pulse_data_dir)
 
+    print(true_positives, false_positives, false_negatives, true_negatives)
     print("--- Algorithm Completed %s seconds ---" % (time.time() - start_time))
 
 

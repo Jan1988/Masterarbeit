@@ -2,6 +2,8 @@ import os
 import cv2
 import numpy as np
 from scipy import ndimage
+from matplotlib import pyplot as plt
+from sklearn.metrics import precision_recall_fscore_support
 
 
 def load_label_data():
@@ -44,7 +46,9 @@ def get_pulse_vals_from_label_data(pulse_label_data, filename):
     return int_pulse_1, int_pulse_2
 
 
-def compare_pulse_vals(bpm, pulse_val_lower, pulse_val_upper):
+def compare_pulse_vals(bpm_map, pulse_val_lower, pulse_val_upper):
+
+    skin_map = np.ones([bpm_map.shape[0], bpm_map.shape[1]], dtype='uint8')
 
     dist = pulse_val_upper - pulse_val_lower
     dist = 3 * np.exp(-dist / 10)
@@ -52,10 +56,13 @@ def compare_pulse_vals(bpm, pulse_val_lower, pulse_val_upper):
     low_bound = pulse_val_lower - dist
     up_bound = pulse_val_upper + dist
 
-    if bpm < low_bound or bpm > up_bound:
-        return 0.0
-    else:
-        return 28.0
+    to_low_bpm_index = bpm_map < low_bound
+    to_high_bpm_index = bpm_map > up_bound
+
+    skin_map[to_low_bpm_index] = 0
+    skin_map[to_high_bpm_index] = 0
+
+    return skin_map
 
 
 def test_func(values):
@@ -65,7 +72,7 @@ def test_func(values):
         return 0
 
 
-def eliminate_weak_skin(skin_mat):
+def eliminate_weak_skin(skin_mat, skin_neighbors=3):
 
     footprint = np.array([[1, 1, 1],
                           [1, 1, 1],
@@ -73,9 +80,40 @@ def eliminate_weak_skin(skin_mat):
 
     results = ndimage.generic_filter(skin_mat, test_func, footprint=footprint, mode='constant')
 
-    # 255 / 9 = 28 -> 2 neighbouring regions, threshold must be >56
-    bool_skin_mat = results > 56
+    # # 255 / 9 = 28 -> 2 neighbouring regions, threshold must be >56
+    # bool_skin_mat = results > 56
+    bool_skin_mat = results > skin_neighbors
     return bool_skin_mat
+
+# To get TP, FP, FN, TN for precision, recall and f_measure
+def compare_with_skin_mask(file, skin_map, h_div, w_div):
+
+    skin_label_dir = os.path.join('assets', 'Skin_Label_Data')
+    skin_mask_path = os.path.join(skin_label_dir, 'Skin_Masks_' + str(h_div) + 'x' + str(w_div), 'Skin_' + str(h_div)
+                                  + 'x' + str(w_div) + '_' + file[:-4] + '.npy')
+    print(skin_mask_path)
+    skin_mask = np.load(skin_mask_path)
+    diff_map = skin_mask - skin_map
+
+    false_negatives = np.count_nonzero(diff_map == 1)
+    false_positives = np.count_nonzero(diff_map == -1)
+    positives = np.count_nonzero(skin_mask == 1)
+    negatives = np.count_nonzero(skin_mask == 0)
+    true_positives = positives - false_negatives
+    true_negatives = negatives - false_positives
+
+    precision, recall, f_measure, support = precision_recall_fscore_support(skin_mask, skin_map, average='micro')
+
+    print('Precision: ' + str(precision*100) + '%', 'Recall: ' + str(recall*100) + '%', 'F-Measure: ' + str(f_measure*100) + '%')
+
+    # fig2 = plt.figure(figsize=(20, 15))
+    # sub1 = fig2.add_subplot(211)
+    # sub1.matshow(skin_mask,  cmap=plt.cm.gray)
+    # sub2 = fig2.add_subplot(212)
+    # sub2.matshow(skin_map,  cmap=plt.cm.gray)
+    # plt.show()
+
+    return true_positives, false_positives, false_negatives, true_negatives
 
 
 def save_rois_with_label(bool_skin_mat, frame, height, width, h_steps, w_steps, file):
@@ -100,15 +138,15 @@ def save_rois_with_label(bool_skin_mat, frame, height, width, h_steps, w_steps, 
 
 
 
-if __name__ == '__main__':
-
-    arr = np.array([[0, 0, 0, 0, 0,  28,  28,  28, 0,   0, 0,   0, 0, 0,   0, 0],
-                    [0, 0, 0, 28,  28,  84,  84,  84,  56,  56,  56,  28, 0, 0, 0, 0],
-                    [0, 0, 0, 28,  56, 140, 168, 168, 140, 112, 112,  56, 56, 28, 56, 28],
-                    [0, 0, 0, 56, 112, 196, 224, 224, 196, 168, 168, 112, 112, 56, 84, 28],
-                    [0, 0, 0, 28, 84, 168, 224, 252, 224, 196, 168, 112, 112, 56, 84, 28],
-                    [28, 56, 56, 56, 84, 168, 224, 224, 168, 168, 140, 112, 56, 28, 28, 0],
-                    [28, 56, 56,  28, 28, 84, 168, 168, 140, 140, 140, 112, 28, 0, 0, 0],
-                    [28, 56, 56,  28, 28, 56, 112,  84,  56,  56,  84,  84, 28, 0, 0, 0]])
-
-    eliminate_weak_skin(arr)
+# if __name__ == '__main__':
+#
+#     arr = np.array([[0, 0, 0, 0, 0,  28,  28,  28, 0,   0, 0,   0, 0, 0,   0, 0],
+#                     [0, 0, 0, 28,  28,  84,  84,  84,  56,  56,  56,  28, 0, 0, 0, 0],
+#                     [0, 0, 0, 28,  56, 140, 168, 168, 140, 112, 112,  56, 56, 28, 56, 28],
+#                     [0, 0, 0, 56, 112, 196, 224, 224, 196, 168, 168, 112, 112, 56, 84, 28],
+#                     [0, 0, 0, 28, 84, 168, 224, 252, 224, 196, 168, 112, 112, 56, 84, 28],
+#                     [28, 56, 56, 56, 84, 168, 224, 224, 168, 168, 140, 112, 56, 28, 28, 0],
+#                     [28, 56, 56,  28, 28, 84, 168, 168, 140, 140, 140, 112, 28, 0, 0, 0],
+#                     [28, 56, 56,  28, 28, 56, 112,  84,  56,  56,  84,  84, 28, 0, 0, 0]])
+#
+#     eliminate_weak_skin(arr)
