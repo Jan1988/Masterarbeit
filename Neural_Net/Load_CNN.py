@@ -62,12 +62,12 @@ if __name__ == '__main__':
 
     # weights_path = os.path.join('assets', 'CNN_2_Best_Weights_Server.hdf5')
     weights_path = os.path.join('assets', 'CNN_2_Best_Weights.hdf5')
-    # prediction_data_path = os.path.join('assets', 'Predict_ROI_00101.npy')
+    prediction_data_path = os.path.join('assets', 'ROI_00130.npy')
     # prediction_data_path = os.path.join('assets', 'Pulse_Data', 'ROIs', 'ROI_00146.npy')
 
     cnn_model = compile_cnn_model(weights_path)
 
-    npy_me = np.load('assets/me_2.npy')
+    npy_me = np.load(prediction_data_path)
     npy_me = npy_me.astype('float32')
 
     prediction_data = npy_me.reshape(npy_me.shape[0]*npy_me.shape[1], npy_me.shape[2], -1, 1)

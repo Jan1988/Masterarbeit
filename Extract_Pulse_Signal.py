@@ -9,7 +9,7 @@ import scipy.misc
 from matplotlib import pyplot as plt
 
 from Video_Tools import load_video, get_video_dimensions
-from POS_Based_Method import pos_based_method, extract_pos_based_method_improved
+from POS_Based_Method import extract_pos_based_method_improved
 from Helper_Tools import load_label_data, get_pulse_vals_from_label_data, compare_pulse_vals, eliminate_weak_skin, \
     compare_with_skin_mask
 
@@ -62,76 +62,6 @@ def plot_and_save_results(_plot_title, _last_frame_clone, _bpm_map, _weak_skin_m
     # scipy.misc.imsave(out_file_path[:-4] + '.png', bpm_map)
 
 
-# Old
-def extr_pos_based_method(time_series, fps):
-
-    # func_time = time.time()
-
-    # sliding window size
-    window_size = 48
-
-    sequence_length = len(time_series)
-    H = np.zeros(sequence_length, dtype='float64')
-
-    interval_count = int(sequence_length / window_size) * 2
-
-    H = np.zeros(sequence_length, dtype='float64')
-
-    n = window_size
-    for i in range(interval_count):
-        m = n - window_size
-
-        # 5 temporal normalization
-        window = time_series[m:n]
-        mean_array = np.average(window, axis=0)
-        norm_array = window / mean_array
-
-        # 6 projection
-        S1 = np.dot(norm_array, [-1, 1, 0])
-        S2 = np.dot(norm_array, [1, 1, -2])
-
-        # 7 tuning
-        S1_std = np.std(S1)
-        S2_std = np.std(S2)
-
-        alpha = S1_std / S2_std
-
-        h = S1 + alpha * S2
-
-        # Hann window signal
-        hann_window = np.hanning(len(h))
-        hann_windowed_signal = hann_window * h
-
-        # Overlap-adding
-        H[m:n] += hann_windowed_signal
-
-        n += int(window_size / 2)
-
-
-    # Fourier Transform
-    raw = np.fft.fft(H, 512)
-    L = int(len(raw) / 2 + 1)
-    fft1 = np.abs(raw[:L])
-
-    frequencies = np.linspace(0, fps / 2, L, endpoint=True)
-    heart_rates = frequencies * 60
-
-    # bandpass filter for pulse
-    bound_low = (np.abs(heart_rates - 50)).argmin()
-    bound_high = (np.abs(heart_rates - 180)).argmin()
-    fft1[:bound_low] = 0
-    fft1[bound_high:] = 0
-
-    max_freq_pos = np.argmax(fft1)
-
-    bpm = heart_rates[max_freq_pos]
-
-    # print("4--- %s seconds ---" % (time.time() - func_time))
-    # print(time.perf_counter())
-    # return fft1[bound_low:bound_high]
-    return bpm, fft1, heart_rates, raw, H
-
-
 def extr_multi_video_calculation(in_dir, out_dir, roi=False):
     for file in os.listdir(in_dir):
         in_file_path = os.path.join(in_dir, file)
@@ -152,7 +82,7 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
     h_div = 32
 
     video_frames, fps = load_video(in_file_path)
-    video_frames = video_frames[22:310]
+    video_frames = video_frames[22:358]
     frame_count, width, height = get_video_dimensions(video_frames)
     w_steps = int(width / w_div)
     h_steps = int(height / h_div)
@@ -254,11 +184,11 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
     print('Saved to ' + out_file_path)
 
 
-# For every pixel
+# For Pixelwise
 def extr_single_video_calculation(in_file, in_file_path, out_dir):
 
     video_frames, fps = load_video(in_file_path)
-    video_frames = video_frames[22:310]
+    video_frames = video_frames[22:358]
     frame_count, width, height = get_video_dimensions(video_frames)
 
 
@@ -315,10 +245,10 @@ if __name__ == '__main__':
 
     # extr_single_video_calculation(file, video_file_path, Pulse_data_dir)
 
-    # extr_multi_video_calculation(video_dir, Pulse_data_dir, roi=True)
+    extr_multi_video_calculation(video_dir, Pulse_data_dir, roi=True)
     # extr_multi_video_calculation(video_dir, Pulse_data_dir, roi=False)
 
-    extr_roi_single_video_calculation(file, video_file_path, Pulse_data_dir)
+    # extr_roi_single_video_calculation(file, video_file_path, Pulse_data_dir)
 
     print(true_positives, false_positives, false_negatives, true_negatives)
     print("--- Algorithm Completed %s seconds ---" % (time.time() - start_time))

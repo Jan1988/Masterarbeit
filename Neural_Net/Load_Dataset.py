@@ -15,10 +15,18 @@ def get_dataset(_dataset_path):
     X = pulse_signal_dataset[:, 0:44]
     Y = pulse_signal_dataset[:, 44]
 
+    # Dataset Normalization
+    print(np.amin(X))
+    print(np.amax(X))
+    mean_X = np.mean(X)
+    std_X = np.std(X)
+    norm_X = (X-mean_X)/std_X
+    print(np.amin(norm_X))
+    print(np.amax(norm_X))
     # reshaped_signal_data = signal_data.reshape((pixel_count, 44, width, height))
 
     # split into 80% for train and 20% for test
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.20, random_state=seed)
+    X_train, X_test, y_train, y_test = train_test_split(norm_X, Y, test_size=0.20, random_state=seed)
     # the data, shuffled and split between train and test sets
 
     # process the data to fit in a keras CNN properly

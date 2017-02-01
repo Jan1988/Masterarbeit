@@ -11,13 +11,12 @@ def load_video(video_filename):
         raise Exception("File Not Found: %s" % video_filename)
     # noinspection PyArgumentList
     capture = cv2.VideoCapture(video_filename)
-    frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+    # Constant = 7
+    frame_count = int(capture.get(7))
     print("Frame Count: %i" % frame_count)
     width, height = get_capture_dimensions(capture)
-    fps = int(capture.get(cv2.CAP_PROP_FPS))
-
-    codec = str(capture.get(cv2.CAP_PROP_FOURCC))
-    print('codec: ' + codec)
+    # Constant = 5
+    fps = int(capture.get(5))
     x = 1
     vid_frames = np.zeros((frame_count, height, width, 3), dtype='uint8')
 
@@ -39,8 +38,10 @@ def load_video(video_filename):
 
 def get_capture_dimensions(capture):
     """Get the dimensions of a capture"""
-    width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    # Constant = 3
+    width = int(capture.get(3))
+    # Constant = 4
+    height = int(capture.get(4))
     print("width % i height % i" % (width, height))
     return width, height
 
