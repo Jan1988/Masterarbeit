@@ -148,8 +148,8 @@ def extr_multi_video_calculation(in_dir, out_dir, roi=False):
 # For ROI
 def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
 
-    w_div = 16
-    h_div = 8
+    w_div = 64
+    h_div = 32
 
     video_frames, fps = load_video(in_file_path)
     video_frames = video_frames[22:310]
@@ -158,11 +158,14 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
     h_steps = int(height / h_div)
 
     # Giant-ndarray for pulse-signals for height*width of a Videos
-    pulse_signal_data = np.zeros([h_div, w_div, 46], dtype='float64')
+    pulse_signal_data = np.zeros([h_div, w_div, 44], dtype='float64')
     bpm_map = np.zeros((h_div, w_div), dtype='float64')
 
     # Load all pulse value belonging to a certain video in array
-    pulse_lower, pulse_upper = get_pulse_vals_from_label_data(load_label_data(), in_file)
+    # pulse_lower, pulse_upper = get_pulse_vals_from_label_data(load_label_data(), in_file)
+    pulse_upper = 55
+    pulse_lower = 42
+    fps = 25
 
     # Fuer die Darstellung der Puls Ergebnismatrix
     plot_title = file + ' BPM: ' + str(pulse_lower) + '-' + str(pulse_upper)
@@ -173,10 +176,10 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
     txt_coord_y = 0.9
     txt_fontsize = 21
 
-    sub1 = fig.add_subplot(231)
-    sub2 = fig.add_subplot(232)
-    sub3 = fig.add_subplot(233)
-    sub4 = fig.add_subplot(234)
+    sub1 = fig.add_subplot(221)
+    sub2 = fig.add_subplot(222)
+    sub3 = fig.add_subplot(223)
+    sub4 = fig.add_subplot(224)
 
     last_frame = video_frames[frame_count - 1]
     last_frame_clone = last_frame.copy()
@@ -233,21 +236,21 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
 
     plt.tight_layout()
     # plt.show()
-    # fig.savefig(out_file_path + '.png')
+    fig.savefig(out_file_path + '.png')
     plt.close()
 
-    # POS Metrics measure
-    vid_true_positives, vid_false_positives, vid_false_negatives, vid_true_negatives = compare_with_skin_mask(file, weak_skin_map, h_div, w_div)
-    global true_positives
-    global false_positives
-    global false_negatives
-    global true_negatives
-    true_positives += vid_true_positives
-    false_positives += vid_false_positives
-    false_negatives += vid_false_negatives
-    true_negatives += vid_true_negatives
+    # # POS Metrics measure
+    # vid_true_positives, vid_false_positives, vid_false_negatives, vid_true_negatives = compare_with_skin_mask(file, weak_skin_map, h_div, w_div)
+    # global true_positives
+    # global false_positives
+    # global false_negatives
+    # global true_negatives
+    # true_positives += vid_true_positives
+    # false_positives += vid_false_positives
+    # false_negatives += vid_false_negatives
+    # true_negatives += vid_true_negatives
 
-    # np.save(out_file_path, pulse_signal_data)
+    np.save(out_file_path, pulse_signal_data)
     print('Saved to ' + out_file_path)
 
 
@@ -260,7 +263,7 @@ def extr_single_video_calculation(in_file, in_file_path, out_dir):
 
 
     # Giant-ndarray for pulse-signals for height*width of a Videos
-    pulse_signal_data = np.zeros([height, width, 44], dtype='float64')
+    pulse_signal_data = np.zeros([height, width, 46], dtype='float64')
     # Only for visualizing
     bpm_map = np.zeros([height, width], dtype='float16')
 
@@ -304,19 +307,18 @@ def extr_single_video_calculation(in_file, in_file_path, out_dir):
 if __name__ == '__main__':
 
     start_time = time.time()
-    file = '00163.MTS'
+    file = '00073.mkv'
     Pulse_data_dir = os.path.join('assets', 'Pulse_Data')
     video_dir = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
     # video_dir = os.path.join('assets', 'Vid_Original', 'Natuerliches_Licht')
     video_file_path = os.path.join(video_dir, file)
 
-
     # extr_single_video_calculation(file, video_file_path, Pulse_data_dir)
 
-    extr_multi_video_calculation(video_dir, Pulse_data_dir, roi=True)
+    # extr_multi_video_calculation(video_dir, Pulse_data_dir, roi=True)
     # extr_multi_video_calculation(video_dir, Pulse_data_dir, roi=False)
 
-    # extr_roi_single_video_calculation(file, video_file_path, Pulse_data_dir)
+    extr_roi_single_video_calculation(file, video_file_path, Pulse_data_dir)
 
     print(true_positives, false_positives, false_negatives, true_negatives)
     print("--- Algorithm Completed %s seconds ---" % (time.time() - start_time))

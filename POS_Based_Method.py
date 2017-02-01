@@ -185,7 +185,6 @@ def extract_pos_based_method_improved(_time_series, _fps):
 
 def get_bpm(_H, _fps):
 
-
     # Fourier Transform
     raw = np.fft.fft(_H, 512)
     L = int(len(raw) / 2 + 1)
@@ -197,8 +196,8 @@ def get_bpm(_H, _fps):
 
     # bandpass filter for pulse
     bandpassed_fft = fft.copy()
-    bound_low = (np.abs(heart_rates - 45)).argmin()
-    bound_high = (np.abs(heart_rates - 180)).argmin()
+    bound_low = (np.abs(heart_rates - 40)).argmin()
+    bound_high = (np.abs(heart_rates - 170)).argmin()
 
     pruned_fft = bandpassed_fft[bound_low:bound_high]
 
@@ -208,7 +207,6 @@ def get_bpm(_H, _fps):
     max_freq_pos = np.argmax(bandpassed_fft)
 
     bpm = heart_rates[max_freq_pos]
-
 
     return bpm, pruned_fft, heart_rates, fft, raw
 

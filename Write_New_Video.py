@@ -53,35 +53,39 @@ def get_roi_frame(frame, y, x, roi_height, roi_width):
     return roi, frame
 
 
+
+
 if __name__ == '__main__':
 
-    filename = '00101.mp4'
-    out_filename = 'new_00101.mp4'
+    filename = '00073.MTS'
+    out_filename = 'new_00073.avi'
 
-    input_path = os.path.join('assets', 'ROIs', filename)
-    output_path = os.path.join('assets', 'ROIs', out_filename)
+    input_path = os.path.join('assets', filename)
+    output_path = os.path.join('assets', out_filename)
     # path = "assets\\ROIs\\Original\\" + filename
 
     vid_frames, fps = load_video(input_path)
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_path, fourcc, 30.0, (640, 360))
+    fourcc = cv2.VideoWriter_fourcc('L', 'A', 'G', 'S')
+    out = cv2.VideoWriter(output_path, fourcc, fps, (1080, 1920))
 
     # zum Verkürzen des Videos
     # [x:] = remove from beginning
-    # cutted_frames = vid_frames[234:]
+    cutted_frames = vid_frames[400:808]
 
-    for frame in vid_frames:
-        roi, frame_with_rect = get_roi_frame(frame, 60, 0, 360, 640)
 
-        # Show results
-        # cv2.imshow('Frames', frame_with_rect)
-        # cv2.imshow('ROI', roi)
+
+    for frame in cutted_frames:
+
+        # # Show results
+        # cv2.imshow('Frames', frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
         # write the frame
-        out.write(roi)
+        out.write(frame)
+
+    # np.save(output_path, cutted_frames)
 
     out.release()
     cv2.destroyAllWindows()

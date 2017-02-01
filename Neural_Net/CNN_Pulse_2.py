@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
     # input shape for tf: (rows, cols, channels)
     input_shape = (44, 1, 1)
-    epochs = 10
+    epochs = 50
     batch_size = 256
 
     # for i in range(3):
@@ -127,10 +127,20 @@ if __name__ == '__main__':
 
     # training
     history_callback = model.fit(X_train, y_train, validation_data=(X_test, y_test), batch_size=batch_size, nb_epoch=epochs, show_accuracy=True, callbacks=callbacks_list)
-    # evaluation
-    # scores = model.evaluate(X_test, y_test, verbose=0)
-    # for i, metric in enumerate(scores):
-    #     print(str(i+1) + '. Metric: ' + str(metric))
+
+    npy_me = np.load('assets/me_2.npy')
+    npy_me = npy_me.astype('float32')
+
+    prediction_data = npy_me.reshape(npy_me.shape[0]*npy_me.shape[1], npy_me.shape[2], -1, 1)
+
+    prediction = model.predict(prediction_data)
+    pred_img_mask = np.ones((prediction.shape[0], 1))
+    skin_ind = prediction[:, 0] <= 0.5
+    pred_img_mask[skin_ind] = 0
+    pred_img_mask = pred_img_mask.reshape(32, 64)
+
+    plt.imshow(pred_img_mask)
+    plt.show()
 
     print("--- Algorithm Completed %s seconds ---" % (time.time() - start_time))
 

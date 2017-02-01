@@ -16,8 +16,8 @@ def load_video(video_filename):
     width, height = get_capture_dimensions(capture)
     fps = int(capture.get(cv2.CAP_PROP_FPS))
 
-    # codec = str(capture.get(cv2.CAP_PROP_FOURCC))
-    # print('codec: ' + codec)
+    codec = str(capture.get(cv2.CAP_PROP_FOURCC))
+    print('codec: ' + codec)
     x = 1
     vid_frames = np.zeros((frame_count, height, width, 3), dtype='uint8')
 
