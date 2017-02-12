@@ -4,7 +4,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten, MaxPooling2D, Convolution2D, Activation
 from keras.callbacks import ModelCheckpoint
 import matplotlib.pyplot as plt
-from Neural_Net.Load_Dataset import get_dataset
+
 import numpy as np
 import os
 
@@ -60,28 +60,32 @@ def compile_cnn_model(_weights_path):
 
 if __name__ == '__main__':
 
-    # weights_path = os.path.join('assets', 'CNN_2_Best_Weights_Server.hdf5')
-    weights_path = os.path.join('assets', 'CNN_2_Best_Weights.hdf5')
-    prediction_data_path = os.path.join('assets', 'ROI_00130.npy')
+    weights_path = os.path.join('assets', 'CNN_2_Best_Weights_Server.hdf5')
+    # weights_path = os.path.join('assets', 'CNN_2_Best_Weights.hdf5')
+    prediction_data_dir = os.path.join('assets', 'Pulse_Data', 'Me')
     # prediction_data_path = os.path.join('assets', 'Pulse_Data', 'ROIs', 'ROI_00146.npy')
 
     cnn_model = compile_cnn_model(weights_path)
 
-    npy_me = np.load(prediction_data_path)
-    npy_me = npy_me.astype('float32')
+    for file in os.listdir(prediction_data_dir):
+        in_file_path = os.path.join(prediction_data_dir, file)
+        if file.endswith(".npy"):
 
-    prediction_data = npy_me.reshape(npy_me.shape[0]*npy_me.shape[1], npy_me.shape[2], -1, 1)
+            prediction_data_path = os.path.join(prediction_data_dir, file)
+            npy_me = np.load(prediction_data_path)
+            npy_me = npy_me.astype('float32')
 
-    prediction = cnn_model.predict(prediction_data)
-    pred_img_mask = np.ones((prediction.shape[0], 1))
-    skin_ind = prediction[:, 0] <= 0.5
-    pred_img_mask[skin_ind] = 0
-    pred_img_mask = pred_img_mask.reshape(32, 64)
+            prediction_data = npy_me.reshape(npy_me.shape[0]*npy_me.shape[1], npy_me.shape[2], -1, 1)
 
-    plt.imshow(pred_img_mask)
-    plt.show()
+            prediction = cnn_model.predict(prediction_data)
+            pred_img_mask = np.ones((prediction.shape[0], 1))
+            skin_ind = prediction[:, 0] <= 0.5
+            pred_img_mask[skin_ind] = 0
+            pred_img_mask = pred_img_mask.reshape(32, 64)
 
-    print(prediction)
+            plt.imshow(pred_img_mask)
+            plt.savefig(os.path.join('history', 'predict_' + file[:-4] + '.png'), bbox_inches='tight')
+            plt.close()
 
 
 

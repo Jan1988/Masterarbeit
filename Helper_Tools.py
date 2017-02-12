@@ -18,7 +18,7 @@ def load_label_data():
     for line in f:
         line = line.replace('\n', '')
         line_split = line.split(';')
-        video_num = '00' + line_split[0] + '.MTS'
+        video_num = '00' + line_split[0]
         video_nums.append(video_num)
 
         pulse_val_1 = line_split[4]
@@ -36,7 +36,7 @@ def load_label_data():
 
 def get_pulse_vals_from_label_data(pulse_label_data, filename):
 
-    data_index = np.where(pulse_label_data == filename)
+    data_index = np.where(pulse_label_data == filename[:-4])
     pulse_val_1 = pulse_label_data[data_index[0], [1]]
     pulse_val_2 = pulse_label_data[data_index[0], [2]]
 

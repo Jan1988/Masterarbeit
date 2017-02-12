@@ -8,11 +8,11 @@ from Video_Tools import load_video, get_video_dimensions
 start_time = time.time()
 
 
-def skin_detection_algorithm_multi_video(dir_path, _dest_folder):
+def skin_detection_algorithm_multi_video(dir_path, _dest_folder, _show_figure=False):
 
     for file in os.listdir(dir_path):
-        if file.endswith(".MTS"):
-            skin_detection_algorithm_single_video(file, dir_path, _dest_folder)
+        if file.endswith(".mkv"):
+            skin_detection_algorithm_single_video(file, dir_path, _dest_folder, show_figure=_show_figure)
 
 
 def skin_detection_algorithm_single_video(_file, _dir_path, _dest_folder, show_figure=False):
@@ -22,13 +22,13 @@ def skin_detection_algorithm_single_video(_file, _dir_path, _dest_folder, show_f
     # define the upper and lower boundaries of the HSV pixel
     # intensities to be considered 'skin'
 
-    # # white skin-tone
-    # lower = np.array([0, 120, 80], dtype="uint8")
-    # upper = np.array([20, 255, 255], dtype="uint8")
+    # white skin-tone
+    lower = np.array([0, 50, 50], dtype="uint8")
+    upper = np.array([25, 255, 255], dtype="uint8")
 
-    # colored skin-tone 00128
-    lower = np.array([0, 80, 30], dtype="uint8")
-    upper = np.array([15, 255, 180], dtype="uint8")
+    # # colored skin-tone 00128
+    # lower = np.array([0, 80, 30], dtype="uint8")
+    # upper = np.array([15, 255, 180], dtype="uint8")
 
     video_frames, fps = load_video(file_path)
     frame_count, width, height = get_video_dimensions(video_frames)
@@ -103,14 +103,16 @@ def skin_detection_algorithm_single_video(_file, _dir_path, _dest_folder, show_f
     sub1 = fig.add_subplot(111)
     sub1.set_title('Norm. Avg.')
     sub1.imshow(final_mask)
-    fig.savefig(_dest_folder + 'Skin_' + _file[:-4] + '.jpg')
+
+    file_path_out = os.path.join(_dest_folder, 'Skin_' + _file[:-4])
+
+    fig.savefig(file_path_out + '.jpg')
     if show_figure:
         plt.show()
 
-    file_path_out = _dest_folder + 'Skin_' + _file[:-4]
-
     # Save it as .npy file
     np.save(file_path_out, final_mask)
+    print('Saved to ' + file_path_out)
 
     # cleanup the camera and close any open windows
     cv2.destroyAllWindows()
@@ -176,21 +178,21 @@ def roi_skin_mask_creation(_file, in_dir, out_dir, show_figure=False):
 
 if __name__ == '__main__':
 
-    # input_dir_path = os.path.join('assets', 'Vid_Original')
-    input_dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
+    input_dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht', 'Me')
+    # input_dir_path = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
     # dest_dir_path = os.path.join('Neural_Net', 'assets', 'Skin_Label_Data')
-    dest_dir_path = os.path.join('assets', 'Skin_Label_Data')
+
     skin_label_dir = os.path.join('assets', 'Skin_Label_Data')
-    file = '00149.MTS'
+    file = '00080.mkv'
     file_path = os.path.join(input_dir_path, file)
     skin_mask_file = 'Skin_00132.npy'
     skin_mask_file_path = os.path.join(skin_label_dir, skin_mask_file)
 
-    roi_skin_mask_multi_creation(skin_label_dir, dest_dir_path, show_figure=True)
+    # roi_skin_mask_multi_creation(skin_label_dir, skin_label_dir, show_figure=True)
     # roi_skin_mask_creation(skin_mask_file, skin_label_dir, skin_label_dir, show_figure=True)
 
-    # skin_detection_algorithm_multi_video(input_dir_path, dest_skin_dir_path)
-    # skin_detection_algorithm_single_video(file, input_dir_path, skin_label_dir)
+    # skin_detection_algorithm_multi_video(input_dir_path, skin_label_dir, _show_figure=True)
+    skin_detection_algorithm_single_video(file, input_dir_path, skin_label_dir)
 
 
     print("--- %s seconds ---" % (time.time() - start_time))
