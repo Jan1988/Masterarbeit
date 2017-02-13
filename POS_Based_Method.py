@@ -143,8 +143,8 @@ def rgb_into_pulse_signal(_window, _hann_window):
     mean_window = np.average(_window, axis=0)
     norm_window = _window / mean_window
 
-    if np.isnan(norm_window).any():
-        print('nan')
+    # if np.isnan(norm_window).any():
+    #     print('nan')
 
     # 6 projection
     S1 = np.dot(norm_window, [-1, 1, 0])

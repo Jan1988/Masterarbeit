@@ -82,11 +82,13 @@ def get_dataset(_dataset_path):
     norm_X = (X-mean_X)/std_X
     print(np.amin(norm_X))
     print(np.amax(norm_X))
+    print(np.mean(norm_X))
+    print(np.std(norm_X))
     # reshaped_signal_data = signal_data.reshape((pixel_count, 44, width, height))
 
-    # split into 80% for train and 20% for test
+    # # split into 80% for train and 20% for test
     X_train, X_test, y_train, y_test = train_test_split(norm_X, Y, test_size=0.20, random_state=seed)
-    # the data, shuffled and split between train and test sets
+    # # the data, shuffled and split between train and test sets
 
     # process the data to fit in a keras CNN properly
     # input data needs to be (N, X, Y, C) - shaped where
@@ -108,6 +110,7 @@ def get_dataset(_dataset_path):
     y_test = y_test.astype('uint8')
     y_train = np_utils.to_categorical(y_train)
     y_test = np_utils.to_categorical(y_test)
+
 
     return X_train, y_train, X_test, y_test
 

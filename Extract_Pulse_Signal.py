@@ -181,6 +181,7 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
     # false_negatives += vid_false_negatives
     # true_negatives += vid_true_negatives
 
+    print("--- File Completed after %s seconds ---" % (time.time() - start_time))
     np.save(out_file_path, pulse_signal_data)
     print('Saved to ' + out_file_path)
 
@@ -192,7 +193,6 @@ def extr_single_video_calculation(in_file, in_file_path, out_dir):
     video_frames = video_frames[22:358]
     frame_count, width, height = get_video_dimensions(video_frames)
 
-    height = 3
 
     # Giant-ndarray for pulse-signals for height*width of a Videos
     pulse_signal_data = np.zeros([height, width, 44], dtype='float64')
@@ -233,6 +233,7 @@ def extr_single_video_calculation(in_file, in_file_path, out_dir):
     plot_and_save_results(plot_title, last_frame_clone, bpm_map, weak_skin_map, strong_skin_map, out_file_path)
 
     np.save(out_file_path, pulse_signal_data)
+    print("--- File Completed after %s seconds ---" % (time.time() - start_time))
     print('Saved to ' + out_file_path)
 
 
@@ -242,7 +243,7 @@ if __name__ == '__main__':
     file = '00081.mkv'
     Pulse_data_dir = os.path.join('assets', 'Pulse_Data')
     video_dir_me = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht', 'Me')
-    # video_dir = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
+    video_dir = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
     video_file_path = os.path.join(video_dir_me, file)
 
     extr_single_video_calculation(file, video_file_path, Pulse_data_dir)

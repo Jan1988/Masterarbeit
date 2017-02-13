@@ -11,12 +11,21 @@ def load_video(video_filename):
         raise Exception("File Not Found: %s" % video_filename)
     # noinspection PyArgumentList
     capture = cv2.VideoCapture(video_filename)
+
     # Constant = 7
     frame_count = int(capture.get(7))
+    # # OpenCV on Ubuntu not working correctly, have to set it manually:
+    # frame_count = int(frame_count/2)
+
     print("Frame Count: %i" % frame_count)
     width, height = get_capture_dimensions(capture)
+
     # Constant = 5
     fps = int(capture.get(5))
+    # OpenCV on Ubuntu not working correctly, have to set it manually:
+    fps = 25
+    print("fps: %i" % fps)
+
     x = 1
     vid_frames = np.zeros((frame_count, height, width, 3), dtype='uint8')
 
