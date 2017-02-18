@@ -8,8 +8,6 @@ tf.set_random_seed(7)
 import time
 
 from sklearn.cross_validation import train_test_split
-# tf.set_random_seed(7)
-
 from keras.callbacks import ModelCheckpoint
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten, MaxPooling2D, Activation
@@ -20,14 +18,6 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 
-# from Neural_Net.Load_Dataset import get_dataset
-from Load_Dataset import get_dataset
-
-# def mean_pred(y_true, y_pred):
-#
-#     # _metric = y_pred/y_true
-#
-#     return _metric
 
 def plot_acc_and_loss(_model, _history_callback):
 
@@ -75,35 +65,41 @@ def get_dataset(_dataset_path):
     Y = pulse_signal_dataset[:, 44]
 
     # Dataset Normalization
-    print(np.amin(X))
-    print(np.amax(X))
-    mean_X = np.mean(X)
-    std_X = np.std(X)
-    norm_X = (X-mean_X)/std_X
-    print(np.amin(norm_X))
-    print(np.amax(norm_X))
-    print(np.mean(norm_X))
-    print(np.std(norm_X))
+    # print(np.amin(X))
+    # print(np.amax(X))
+    # mean_X = np.mean(X)
+    # std_X = np.std(X)
+    # norm_X = (X-mean_X)/std_X
+    # print(np.amin(norm_X))
+    # print(np.amax(norm_X))
+    # print(np.mean(norm_X))
+    # print(np.std(norm_X))
     # reshaped_signal_data = signal_data.reshape((pixel_count, 44, width, height))
 
+    # # split into 80% for train and 20% for test
+    X_train, X_test, y_train, y_test = train_test_split(norm_X, Y, test_size=0.20, random_state=seed)
+    # # the data, shuffled and split between train and test sets
 
     # process the data to fit in a keras CNN properly
     # input data needs to be (N, X, Y, C) - shaped where
     # N - number of samples
     # C - number of channels per sample
     # (X, Y) - sample size
-    length_training = X.shape[0]
+    length_training = X_train.shape[0]
+    length_testing = X_test.shape[0]
 
-    X_train = X.reshape(length_training, 44, 1, 1)
+    print(length_training, length_testing, len(y_train), len(y_test))
+
+    X_train = X_train.reshape(length_training, 44, 1, 1)
+    X_test = X_test.reshape(length_testing, 44, 1, 1)
     X_train = X_train.astype('float32')
-
-    print(X_train.shape)
+    X_test = X_test.astype('float32')
 
     # convert class vectors to binary class matrices
-    y_train = Y.astype('uint8')
+    y_train = y_train.astype('uint8')
+    y_test = y_test.astype('uint8')
     y_train = np_utils.to_categorical(y_train)
-
-    print(y_train.shape)
+    y_test = np_utils.to_categorical(y_test)
 
 
     return X_train, y_train, X_test, y_test

@@ -102,7 +102,7 @@ def skin_detection_algorithm_single_video(_file, _dir_path, _dest_folder, show_f
     fig = plt.figure(figsize=(17, 9))
     sub1 = fig.add_subplot(111)
     sub1.set_title('Norm. Avg.')
-    sub1.imshow(final_mask)
+    sub1.imshow(final_mask, cmap=plt.cm.gray)
 
     file_path_out = os.path.join(_dest_folder, 'Skin_' + _file[:-4])
 
@@ -111,7 +111,7 @@ def skin_detection_algorithm_single_video(_file, _dir_path, _dest_folder, show_f
         plt.show()
 
     # Save it as .npy file
-    np.save(file_path_out, final_mask)
+    # np.save(file_path_out, final_mask)
     print('Saved to ' + file_path_out)
 
     # cleanup the camera and close any open windows
@@ -129,8 +129,8 @@ def roi_skin_mask_creation(_file, in_dir, out_dir, show_figure=False):
 
     full_skin_mask_file_path = os.path.join(in_dir, _file)
 
-    w_div = 16
-    h_div = 8
+    w_div = 64
+    h_div = 32
     skin_mask = np.load(full_skin_mask_file_path)
     height, width = skin_mask.shape
     w_steps = int(width / w_div)
@@ -165,7 +165,7 @@ def roi_skin_mask_creation(_file, in_dir, out_dir, show_figure=False):
     fig = plt.figure(figsize=(17, 9))
     sub1 = fig.add_subplot(111)
     sub1.set_title(roi_skin_mask_file_path)
-    sub1.imshow(roi_skin_mask)
+    sub1.imshow(roi_skin_mask, cmap=plt.cm.gray)
 
     fig.savefig(roi_skin_mask_file_path[:-4] + '.png')
     if show_figure:
@@ -175,6 +175,10 @@ def roi_skin_mask_creation(_file, in_dir, out_dir, show_figure=False):
     # Save it as .npy file
     np.save(roi_skin_mask_file_path, roi_skin_mask)
     cv2.destroyAllWindows()
+
+
+
+
 
 if __name__ == '__main__':
 
@@ -191,8 +195,8 @@ if __name__ == '__main__':
     # roi_skin_mask_multi_creation(skin_label_dir, skin_label_dir, show_figure=True)
     # roi_skin_mask_creation(skin_mask_file, skin_label_dir, skin_label_dir, show_figure=True)
 
-    # skin_detection_algorithm_multi_video(input_dir_path, skin_label_dir, _show_figure=True)
-    skin_detection_algorithm_single_video(file, input_dir_path, skin_label_dir)
+    skin_detection_algorithm_multi_video(input_dir_path, skin_label_dir, _show_figure=True)
+    # skin_detection_algorithm_single_video(file, input_dir_path, skin_label_dir)
 
 
     print("--- %s seconds ---" % (time.time() - start_time))

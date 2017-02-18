@@ -6,7 +6,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from Helper_Tools import load_label_data, get_pulse_vals_from_label_data, compare_pulse_vals, eliminate_weak_skin
-from POS_Based_Method import extract_pos_based_method_improved
+from POS_Based_Method import extract_pos_based_method_improved, pos_based_method_improved
 from Video_Tools import load_video, get_video_dimensions
 
 
@@ -21,7 +21,7 @@ dest_skin_dir_path = os.path.join('assets', 'Skin_Label_Data', '')
 # Plot for Thesis Image
 def plot_results(bpm, fft2, fft1, heart_rates, raw=0, overlap_signal=0, pulse_signal=0, norm_channels=0, time_series=0):
     # plt.axis([0, n, y_lower, y_upper])
-    tick_fontsize = 7
+    tick_fontsize = 12
     txt_fontsize = 10
     nbins_x = 8
     nbins_y = 5
@@ -93,7 +93,7 @@ def plot_results(bpm, fft2, fft1, heart_rates, raw=0, overlap_signal=0, pulse_si
     sub7.plot(heart_rates, fft2, 'k')
     sub7.tick_params(axis='both', which='major', labelsize=tick_fontsize)
 
-    # plt.tight_layout()
+    plt.tight_layout()
     fig.savefig(file_path[:-4] + '.png', bbox_inches='tight')
     # fig.savefig(file_path[:-4] + '.png')
     plt.show()
@@ -110,8 +110,8 @@ def multi_video_calculation(dir_path, pulse_label_data):
 
 def single_video_calculation(file, file_path, pulse_label_data):
     start_time = time.time()
-    w_div = 64
-    h_div = 32
+    w_div = 16
+    h_div = 8
 
     skin_mat = np.zeros((h_div, w_div), dtype='float64')
     bpm_values = np.zeros((h_div, w_div), dtype='float64')
@@ -126,16 +126,16 @@ def single_video_calculation(file, file_path, pulse_label_data):
     # Will be used for ROI labeling
     pulse_lower, pulse_upper = get_pulse_vals_from_label_data(pulse_label_data, file)
 
-    # Fuer die Darstellung der Puls Ergebnismatrix
-    fig = plt.figure(figsize=(18, 9))
-    fig.suptitle(file, fontsize=14, fontweight='bold')
-    sub1 = fig.add_subplot(221)
-    sub2 = fig.add_subplot(222)
-    sub3 = fig.add_subplot(223)
-    sub4 = fig.add_subplot(224)
-
-    last_frame = video_frames[frame_count - 1]
-    last_frame_clone = last_frame.copy()
+    # # Fuer die Darstellung der Puls Ergebnismatrix
+    # fig = plt.figure(figsize=(18, 9))
+    # fig.suptitle(file, fontsize=14, fontweight='bold')
+    # sub1 = fig.add_subplot(221)
+    # sub2 = fig.add_subplot(222)
+    # sub3 = fig.add_subplot(223)
+    # sub4 = fig.add_subplot(224)
+    #
+    # last_frame = video_frames[frame_count - 1]
+    # last_frame_clone = last_frame.copy()
 
     '''BPM Estimation for every ROI'''
 
@@ -152,18 +152,13 @@ def single_video_calculation(file, file_path, pulse_label_data):
             time_series = np.mean(roi_time_series, axis=(1, 2))
 
             # Pulse-Signal Extraction
-            # bpm, pruned_fft, fft, heart_rates, raw, H, h, norm_channels, time_series = pos_based_method_improved(time_series, fps)
-            bpm, pruned_fft = extract_pos_based_method_improved(time_series, fps)
+            bpm, pruned_fft, fft, heart_rates, raw, H, h, norm_channels, time_series = pos_based_method_improved(time_series, fps)
+            # bpm, pruned_fft = extract_pos_based_method_improved(time_series, fps)
 
-            sub1.text(x + roi_width / 2, y + roi_height / 2, round(bpm, 1), color=(0.0, 0.0, 0.0), fontsize=5,
-                      va='center', ha='center')
-            # sub2.text(roi_ind_x, roi_ind_y, round(bpm, 1), color=(0.745, 0.467, 0.294), fontsize=5, va='center',
-            #           ha='center')
-            cv2.rectangle(last_frame_clone, (x, y), (x + roi_width, y + roi_height), (0, 0, 0), 2)
-            # plot_results(bpm, pruned_fft, fft, heart_rates, raw=raw, overlap_signal=H, pulse_signal=h, norm_channels=norm_channels, time_series=time_series)
+            plot_results(bpm, pruned_fft, fft, heart_rates, raw=raw, overlap_signal=H, pulse_signal=h, norm_channels=norm_channels, time_series=time_series)
 
             bpm_values[roi_ind_y, roi_ind_x] = bpm
-            skin_mat[roi_ind_y, roi_ind_x] = compare_pulse_vals(bpm, pulse_lower, pulse_upper)
+
         print("Fortschritt: %.2f %%" % ((x+1.0) / width*100.0))
 
 
@@ -171,26 +166,11 @@ def single_video_calculation(file, file_path, pulse_label_data):
     bool_skin_mat = eliminate_weak_skin(skin_mat)
     # save_rois_with_label(bool_skin_mat, last_frame, height, width, roi_height, roi_width, file[:-4])
 
-    # Fuer die Darstellung der Puls Ergebnismatrix
-    sub1.set_title('BPM on ROIs')
-    sub1.imshow(last_frame_clone)
-    sub2.set_title('BPM Matrix')
-    sub2.matshow(bpm_values, cmap=plt.cm.gray)
-    sub3.set_title('Skin, Non-Skin Matrix')
-    sub3.matshow(skin_mat, cmap=plt.cm.gray)
-    sub4.set_title('Skin, Neighbour reduced Matrix')
-    sub4.matshow(bool_skin_mat, cmap=plt.cm.gray)
-    plt.tight_layout()
-    fig.savefig(file_path[:-4] + '.png')
-    plt.close()
-
-    # plt.show()
-
 
 
 if __name__ == '__main__':
 
-    file = '00132.MTS'
+    file = '00130.MTS'
     file_path = os.path.join(input_dir_path_kue, file)
     pulse_label_data = load_label_data()
 

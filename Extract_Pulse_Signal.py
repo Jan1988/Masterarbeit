@@ -1,10 +1,8 @@
 
 import os
 import time
-
 import cv2
 import numpy as np
-import scipy.misc
 
 from matplotlib import pyplot as plt
 
@@ -94,10 +92,8 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
     bpm_map = np.zeros((h_div, w_div), dtype='float64')
 
     # Load all pulse value belonging to a certain video in array
-    # pulse_lower, pulse_upper = get_pulse_vals_from_label_data(load_label_data(), in_file)
-    pulse_upper = 52
-    pulse_lower = 46
-    fps = 25
+    pulse_lower, pulse_upper = get_pulse_vals_from_label_data(load_label_data(), in_file)
+
 
     # For plotting the skin and pulse matrices
     plot_title = file + ' BPM: ' + str(pulse_lower) + '-' + str(pulse_upper)
@@ -170,16 +166,16 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
     fig.savefig(out_file_path + '.png')
     plt.close()
 
-    # # POS Metrics measure
-    # vid_true_positives, vid_false_positives, vid_false_negatives, vid_true_negatives = compare_with_skin_mask(file, weak_skin_map, h_div, w_div)
-    # global true_positives
-    # global false_positives
-    # global false_negatives
-    # global true_negatives
-    # true_positives += vid_true_positives
-    # false_positives += vid_false_positives
-    # false_negatives += vid_false_negatives
-    # true_negatives += vid_true_negatives
+    # POS Metrics measure
+    vid_true_positives, vid_false_positives, vid_false_negatives, vid_true_negatives = compare_with_skin_mask(file, weak_skin_map, h_div, w_div)
+    global true_positives
+    global false_positives
+    global false_negatives
+    global true_negatives
+    true_positives += vid_true_positives
+    false_positives += vid_false_positives
+    false_negatives += vid_false_negatives
+    true_negatives += vid_true_negatives
 
     print("--- File Completed after %s seconds ---" % (time.time() - start_time))
     np.save(out_file_path, pulse_signal_data)
@@ -240,18 +236,19 @@ def extr_single_video_calculation(in_file, in_file_path, out_dir):
 if __name__ == '__main__':
 
     start_time = time.time()
-    file = '00081.mkv'
+    file = '00072.mkv'
     Pulse_data_dir = os.path.join('assets', 'Pulse_Data')
     video_dir_me = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht', 'Me')
     video_dir = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
     video_file_path = os.path.join(video_dir_me, file)
 
-    extr_single_video_calculation(file, video_file_path, Pulse_data_dir)
+    # extr_single_video_calculation(file, video_file_path, Pulse_data_dir)
+    # extr_roi_single_video_calculation(file, video_file_path, Pulse_data_dir)
 
-    # extr_multi_video_calculation(video_dir_me, Pulse_data_dir, roi=True)
+    extr_multi_video_calculation(video_dir_me, Pulse_data_dir, roi=True)
     # extr_multi_video_calculation(video_dir_me, Pulse_data_dir, roi=False)
 
-    # extr_roi_single_video_calculation(file, video_file_path, Pulse_data_dir)
+
 
     print(true_positives, false_positives, false_negatives, true_negatives)
     print("--- Algorithm Completed %s seconds ---" % (time.time() - start_time))

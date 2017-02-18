@@ -1,21 +1,20 @@
 from __future__ import print_function
 
-import numpy as np
 import os
 
-from Neural_Net.CNN_Tools import plot_filters
-
-from keras.models import Sequential
+import numpy as np
+from keras.initializations import normal, identity
 from keras.layers import Dense, Activation
 from keras.layers import SimpleRNN
-from keras.initializations import normal, identity
+from keras.models import Sequential
 from keras.optimizers import RMSprop
 from keras.utils import np_utils
+
 from Neural_Net.Load_Dataset import get_dataset
 
 
 # pulse_signal_dataset_path = os.path.join('assets', 'Balanced_Data', 'Balanced_00160.npy')
-pulse_signal_dataset_path = os.path.join('assets', 'ROI_Full_Dataset.npy')
+pulse_signal_dataset_path = os.path.join('assets', 'Datasets', 'ROI_Full_Dataset.npy')
 
 # fix random seed for reproducibility
 np.random.seed(7)
