@@ -1,4 +1,4 @@
-import cv2
+
 import numpy as np
 # fix random seed for reproducibility
 seed = 7
@@ -8,8 +8,6 @@ import tensorflow as tf
 tf.set_random_seed(7)
 import time
 
-from sklearn.cross_validation import train_test_split
-# tf.set_random_seed(7)
 
 from keras.callbacks import ModelCheckpoint
 from keras.models import Sequential
@@ -21,14 +19,6 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 
-# from Neural_Net.Load_Dataset import get_dataset
-from Load_Dataset import get_dataset
-
-# def mean_pred(y_true, y_pred):
-#
-#     # _metric = y_pred/y_true
-#
-#     return _metric
 
 
 def plot_acc_and_loss(_history_callback):

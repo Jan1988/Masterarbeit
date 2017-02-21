@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
-from Helper_Tools import load_label_data, get_pulse_vals_from_label_data, compare_pulse_vals, eliminate_weak_skin
+from Helper_Tools import load_reference_data, get_pulse_vals_from_label_data, compare_pulse_vals, eliminate_weak_skin
 from POS_Based_Method import extract_pos_based_method_improved, pos_based_method_improved
 from Video_Tools import load_video, get_video_dimensions
 
@@ -15,7 +15,6 @@ input_dir_path_nat = os.path.join('assets', 'Vid_Original', 'Natuerliches_Licht'
 input_dir_path_kue = os.path.join('assets', 'Vid_Original', 'Kuenstliches_Licht')
 dest_dir_path = os.path.join('assets', 'Pulse_Data', '')
 dest_skin_dir_path = os.path.join('assets', 'Skin_Label_Data', '')
-
 
 
 # Plot for Thesis Image
@@ -108,12 +107,12 @@ def multi_video_calculation(dir_path, pulse_label_data):
             single_video_calculation(file, file_path, pulse_label_data)
 
 
+# Old script - function was only used for plotting the signale curves of POS, fft, purned_fft, ...
 def single_video_calculation(file, file_path, pulse_label_data):
     start_time = time.time()
     w_div = 16
     h_div = 8
 
-    skin_mat = np.zeros((h_div, w_div), dtype='float64')
     bpm_values = np.zeros((h_div, w_div), dtype='float64')
 
     video_frames, fps = load_video(file_path)
@@ -122,24 +121,7 @@ def single_video_calculation(file, file_path, pulse_label_data):
     roi_width = int(width / w_div)
     roi_height = int(height / h_div)
 
-    # Load all pulse value belonging to a certain video in array
-    # Will be used for ROI labeling
-    pulse_lower, pulse_upper = get_pulse_vals_from_label_data(pulse_label_data, file)
 
-    # # Fuer die Darstellung der Puls Ergebnismatrix
-    # fig = plt.figure(figsize=(18, 9))
-    # fig.suptitle(file, fontsize=14, fontweight='bold')
-    # sub1 = fig.add_subplot(221)
-    # sub2 = fig.add_subplot(222)
-    # sub3 = fig.add_subplot(223)
-    # sub4 = fig.add_subplot(224)
-    #
-    # last_frame = video_frames[frame_count - 1]
-    # last_frame_clone = last_frame.copy()
-
-    '''BPM Estimation for every ROI'''
-
-    # Hier wird der ungeradere Rest abgeschnitten
     width = roi_width * w_div
     height = roi_height * h_div
     for x in range(0, width, roi_width):
@@ -162,23 +144,16 @@ def single_video_calculation(file, file_path, pulse_label_data):
         print("Fortschritt: %.2f %%" % ((x+1.0) / width*100.0))
 
 
-    # check neighbouring rois
-    bool_skin_mat = eliminate_weak_skin(skin_mat)
-    # save_rois_with_label(bool_skin_mat, last_frame, height, width, roi_height, roi_width, file[:-4])
-
-
-
 if __name__ == '__main__':
 
     file = '00130.MTS'
     file_path = os.path.join(input_dir_path_kue, file)
-    pulse_label_data = load_label_data()
+    pulse_label_data = load_reference_data()
 
     # single_video_calculation(file, file_path, pulse_label_data)
 
     multi_video_calculation(input_dir_path_kue, pulse_label_data)
 
     # skin_detection_algorithm_multi_video(input_dir_path, dest_skin_dir_path)
-
 
     print("--- Algorithm Completed %s seconds ---" % (time.time() - start_time))

@@ -5,8 +5,8 @@ from scipy import ndimage
 from matplotlib import pyplot as plt
 from sklearn.metrics import precision_recall_fscore_support
 
-
-def load_label_data():
+# load reference bpms from csv-file into array
+def load_reference_data():
     csv_file = os.path.join('assets', 'Label_Table.csv')
     f = open(csv_file, 'r')
     f.readline()
@@ -33,7 +33,7 @@ def load_label_data():
 
     return final_csv_data
 
-
+# get lower and upper reference bpm value from array for a certain video
 def get_pulse_vals_from_label_data(pulse_label_data, filename):
 
     data_index = np.where(pulse_label_data == filename[:-4])
@@ -46,10 +46,14 @@ def get_pulse_vals_from_label_data(pulse_label_data, filename):
     return int_pulse_1, int_pulse_2
 
 
+# compare bpms with reference bpms lower and upper
 def compare_pulse_vals(bpm_map, pulse_val_lower, pulse_val_upper):
 
+    # initialize skin-map
     skin_map = np.ones([bpm_map.shape[0], bpm_map.shape[1]], dtype='uint8')
 
+    # calculate difference between unpper and lower reference value
+    # if interval is high tolerance is lower than for smaller intervals
     dist = pulse_val_upper - pulse_val_lower
     dist = 3 * np.exp(-dist / 10)
 
@@ -71,19 +75,22 @@ def test_func(values):
     else:
         return 0
 
-
+# check neighbouring BPMs and eliminate skin with less neighbouring skin-regions than thres
 def eliminate_weak_skin(skin_mat, skin_neighbors=3):
 
+    # filter
     footprint = np.array([[1, 1, 1],
                           [1, 1, 1],
                           [1, 1, 1]])
 
+    # custom filter function
+    # is not going over the boarders
     results = ndimage.generic_filter(skin_mat, test_func, footprint=footprint, mode='constant')
 
-    # # 255 / 9 = 28 -> 2 neighbouring regions, threshold must be >56
-    # bool_skin_mat = results > 56
+    # consider neighbouring regions, values to true above threshold
     bool_skin_mat = results > skin_neighbors
     return bool_skin_mat
+
 
 # To get TP, FP, FN, TN for precision, recall and f_measure
 def compare_with_skin_mask(file, skin_map, h_div, w_div):
@@ -106,16 +113,10 @@ def compare_with_skin_mask(file, skin_map, h_div, w_div):
 
     print('Precision: ' + str(precision*100) + '%', 'Recall: ' + str(recall*100) + '%', 'F-Measure: ' + str(f_measure*100) + '%')
 
-    # fig2 = plt.figure(figsize=(20, 15))
-    # sub1 = fig2.add_subplot(211)
-    # sub1.matshow(skin_mask,  cmap=plt.cm.gray)
-    # sub2 = fig2.add_subplot(212)
-    # sub2.matshow(skin_map,  cmap=plt.cm.gray)
-    # plt.show()
-
     return true_positives, false_positives, false_negatives, true_negatives
 
 
+# Old function to save small roi images with skin or non-skin label
 def save_rois_with_label(bool_skin_mat, frame, height, width, h_steps, w_steps, file):
 
     dest_folder = os.path.join('assets', 'ROIs', file, '')
@@ -136,17 +137,3 @@ def save_rois_with_label(bool_skin_mat, frame, height, width, h_steps, w_steps, 
                 file_path_out = dest_folder + 'non_skin_' + file + '_' + str(j) + str(i) + '.png'
                 cv2.imwrite(file_path_out, roi)
 
-
-
-# if __name__ == '__main__':
-#
-#     arr = np.array([[0, 0, 0, 0, 0,  28,  28,  28, 0,   0, 0,   0, 0, 0,   0, 0],
-#                     [0, 0, 0, 28,  28,  84,  84,  84,  56,  56,  56,  28, 0, 0, 0, 0],
-#                     [0, 0, 0, 28,  56, 140, 168, 168, 140, 112, 112,  56, 56, 28, 56, 28],
-#                     [0, 0, 0, 56, 112, 196, 224, 224, 196, 168, 168, 112, 112, 56, 84, 28],
-#                     [0, 0, 0, 28, 84, 168, 224, 252, 224, 196, 168, 112, 112, 56, 84, 28],
-#                     [28, 56, 56, 56, 84, 168, 224, 224, 168, 168, 140, 112, 56, 28, 28, 0],
-#                     [28, 56, 56,  28, 28, 84, 168, 168, 140, 140, 140, 112, 28, 0, 0, 0],
-#                     [28, 56, 56,  28, 28, 56, 112,  84,  56,  56,  84,  84, 28, 0, 0, 0]])
-#
-#     eliminate_weak_skin(arr)

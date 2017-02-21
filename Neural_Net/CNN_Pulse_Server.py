@@ -156,8 +156,6 @@ def get_trainings_set(_dataset_path, ):
     # print(np.mean(norm_X))
     # print(np.std(norm_X))
 
-    # # Dataset Normalization
-
     print(X_train.shape, y_train.shape)
 
     # process the data to fit in a keras CNN properly

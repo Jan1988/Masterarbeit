@@ -1,11 +1,13 @@
 import cv2
 import numpy as np
 import os
-import scipy.fftpack
 
-# test
+
+"""Load a video into a numpy array"""
+
+
 def load_video(video_filename):
-    """Load a video into a numpy array"""
+
     print("Loading " + video_filename)
     if not os.path.isfile(video_filename):
         raise Exception("File Not Found: %s" % video_filename)
@@ -67,36 +69,4 @@ def get_frame_dimensions(frame):
     return width, height
 
 
-def split_frame_into_rgb_channels(image):
-
-    red = image[:, :, 2]
-    green = image[:, :, 1]
-    blue = image[:, :, 0]
-
-    return red, green, blue
-
-
-def split_vid_into_rgb_channels(vid_frames):
-    '''Split the target video stream into its red, green and blue channels.
-    image - a numpy array of shape (rows, columns, 3).
-    output - three numpy arrays of shape (rows, columns) and dtype same as
-             image, containing the corresponding channels.
-    '''
-
-    red = vid_frames[:, :, :, 2]
-    green = vid_frames[:, :, :, 1]
-    blue = vid_frames[:, :, :, 0]
-
-    return red, green, blue
-
-
-def load_video_float(video_filename):
-    vid_data, fps = load_video(video_filename)
-    return uint8_to_float(vid_data), fps
-
-
-def uint8_to_float(img):
-    result = np.ndarray(shape=img.shape, dtype='float')
-    result[:] = img * (1. / 255)
-    return result
 

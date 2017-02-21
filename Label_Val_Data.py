@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 start_time = time.time()
 
 
+# iterate over all files in folder
 def multi_valid_data_labeling(_signal_data_dir, _skin_mask_data_dir, out_labeled_data, roi=False):
 
     for file in os.listdir(_signal_data_dir):
@@ -16,17 +17,15 @@ def multi_valid_data_labeling(_signal_data_dir, _skin_mask_data_dir, out_labeled
             if roi:
                 print('ROI Calculation')
                 roi_skin_mask_file_path = os.path.join(_skin_mask_data_dir, 'ROI_Skin_' + file[4:])
-
                 single_data_labeling(file, _signal_file_path, roi_skin_mask_file_path, out_labeled_data)
             else:
                 print('Pixelwise Calculation')
                 _skin_mask_file_path = os.path.join(_skin_mask_data_dir, 'Skin_' + file)
-
                 single_data_labeling(file, _signal_file_path, _skin_mask_file_path, out_labeled_data)
 
 
+# Sets the Skin-mask of a Pulse signal file as its Labels
 def single_data_labeling(_signal_file, _signal_file_path, _skin_mask_file_path, out_labeled_data):
-
 
     signal_data = np.load(_signal_file_path)
     print('Load ' + _signal_file_path)
@@ -36,17 +35,16 @@ def single_data_labeling(_signal_file, _signal_file_path, _skin_mask_file_path, 
     print(signal_data.shape)
     print(skin_mask_data.shape)
 
-    # Replace NaNs with zero
+    # Replace remaining NaNs with zero
     where_are_NaNs = np.isnan(signal_data)
     print('NaNs: ' + str(len(signal_data[where_are_NaNs])))
     signal_data[where_are_NaNs] = 0.0
 
-    # Where values are low
+    # skin positions where are ones & non-skin where zeros
     skin_indices = skin_mask_data > 0
     non_skin_indices = skin_mask_data < 1
     skin_count = len(skin_mask_data[skin_indices])
     non_skin_count = len(skin_mask_data[non_skin_indices])
-
 
     print('Count of Skin Samples: ' + str(skin_count))
     print('Count of Non-Skin Samples: ' + str(non_skin_count))
@@ -63,6 +61,7 @@ def single_data_labeling(_signal_file, _signal_file_path, _skin_mask_file_path, 
     print(skin_signal_data.shape)
     print(non_skin_signal_data.shape)
 
+    # append right labels to the samplerows
     final_skin_signal_data = np.append(skin_signal_data, one_labels, axis=1)
     final_non_skin_signal_data = np.append(non_skin_signal_data, zero_labels, axis=1)
 
@@ -71,7 +70,7 @@ def single_data_labeling(_signal_file, _signal_file_path, _skin_mask_file_path, 
     print(np.mean(final_skin_signal_data[:, 44]))
     print(np.mean(final_non_skin_signal_data[:, 44]))
 
-
+    # concatenate non-skin and skin data lists
     labeled_signal_data = np.concatenate((final_skin_signal_data, final_non_skin_signal_data))
     print(labeled_signal_data.shape)
 
@@ -79,6 +78,7 @@ def single_data_labeling(_signal_file, _signal_file_path, _skin_mask_file_path, 
 
     np.save(labeled_signal_data_path, labeled_signal_data)
     print('Saved to ' + labeled_signal_data_path)
+
 
 if __name__ == '__main__':
 

@@ -8,8 +8,10 @@ from sklearn.cross_validation import train_test_split
 from keras.utils import np_utils
 
 
+# old function for splitting dataset into training- and testset
 def split_into_training_and_test(_pulse_signal_dataset, out_dir, _roi=False):
 
+    # seperate samples from labels
     X = _pulse_signal_dataset[:, 0:44]
     Y = _pulse_signal_dataset[:, 44]
 
@@ -24,6 +26,11 @@ def split_into_training_and_test(_pulse_signal_dataset, out_dir, _roi=False):
 
     X_train, X_test, y_train, y_test = train_test_split(norm_X, Y, test_size=0.20, random_state=seed)
 
+    # process the data to fit in a keras CNN properly
+    # input data needs to be (N, X, Y, C) - shaped where
+    # N - number of samples
+    # C - number of channels per sample
+    # (X, Y) - sample size
     length_training = X_train.shape[0]
     length_testing = X_test.shape[0]
 
@@ -40,6 +47,7 @@ def split_into_training_and_test(_pulse_signal_dataset, out_dir, _roi=False):
 
     print(len(X_train), len(X_test), len(y_train), len(y_test))
 
+    # for saving to files
     out_x_train = 'X_train'
     out_x_test = 'X_test'
     out_y_train = 'y_train'
@@ -66,9 +74,10 @@ def split_into_training_and_test(_pulse_signal_dataset, out_dir, _roi=False):
     print('Saving ' + out_y_test_path)
 
 
+# stack the single balanced pulse data files
 def create_full_dataset(_balanced_data_dir, dataset_dir, roi=False):
 
-
+    # create empty dataset
     full_dataset = np.array([]).reshape(0, 45)
 
     for file in os.listdir(_balanced_data_dir):
@@ -80,6 +89,7 @@ def create_full_dataset(_balanced_data_dir, dataset_dir, roi=False):
 
             print('Loaded Shape ' + str(data_loaded.shape))
 
+            # stack loaded data and tempory full_dataset
             full_dataset = np.vstack([full_dataset, data_loaded])
 
             print('Full Shape ' + str(full_dataset.shape))
@@ -92,7 +102,8 @@ def create_full_dataset(_balanced_data_dir, dataset_dir, roi=False):
     np.save(out_full_dataset_path, full_dataset)
     print('Saving ' + out_full_dataset_path)
 
-    split_into_training_and_test(full_dataset, dataset_dir, roi)
+    # # call function to get a splitted dataset
+    # split_into_training_and_test(full_dataset, dataset_dir, roi)
 
 
 if __name__ == '__main__':

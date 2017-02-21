@@ -8,6 +8,7 @@ from Video_Tools import load_video, get_video_dimensions
 start_time = time.time()
 
 
+# iterate over all files in folder
 def skin_detection_algorithm_multi_video(dir_path, _dest_folder, _show_figure=False):
 
     for file in os.listdir(dir_path):
@@ -88,16 +89,8 @@ def skin_detection_algorithm_single_video(_file, _dir_path, _dest_folder, show_f
 
     # Where values are lower than threshold
     final_mask = np.ones([height, width])
-    skin_arr_mean = np.mean(skin_arr)
-    skin_arr_min = np.amin(skin_arr)
-    print(skin_arr_min)
-    print(skin_arr_mean)
-    # low_values_indices = skin_arr < 0
     low_values_indices = skin_arr < -2
     final_mask[low_values_indices] = 0
-
-    # # Manuel modyfying
-    # final_mask[950:1080, 600:860] = 0
 
     fig = plt.figure(figsize=(17, 9))
     sub1 = fig.add_subplot(111)
@@ -118,6 +111,7 @@ def skin_detection_algorithm_single_video(_file, _dir_path, _dest_folder, show_f
     cv2.destroyAllWindows()
 
 
+# iterate over all files in folder for ROIs
 def roi_skin_mask_multi_creation(in_dir, out_dir, show_figure=False):
 
     for file in os.listdir(in_dir):
@@ -125,6 +119,7 @@ def roi_skin_mask_multi_creation(in_dir, out_dir, show_figure=False):
             roi_skin_mask_creation(file, in_dir, out_dir, show_figure=show_figure)
 
 
+# ROI skin-mask creation
 def roi_skin_mask_creation(_file, in_dir, out_dir, show_figure=False):
 
     full_skin_mask_file_path = os.path.join(in_dir, _file)
@@ -138,7 +133,7 @@ def roi_skin_mask_creation(_file, in_dir, out_dir, show_figure=False):
 
     roi_skin_mask = np.zeros([h_div, w_div])
 
-    # Hier wird der ungeradere Rest abgeschnitten
+    # odd rest is cutted here
     width = w_steps * w_div
     height = h_steps * h_div
     for x in range(0, width, w_steps):
@@ -146,13 +141,16 @@ def roi_skin_mask_creation(_file, in_dir, out_dir, show_figure=False):
             roi_ind_x = int(x / w_steps)
             roi_ind_y = int(y / h_steps)
 
+            # get ROIs of skin-mask
             roi = skin_mask[y:y + h_steps, x:x + w_steps]
 
+            # calculate mean fo checking if region is skin or non-skin
             roi_skin_mask[roi_ind_y, roi_ind_x] = np.mean(roi)
 
+    # get all positions of skin and non-skin with mean threshold
     skin_ind = roi_skin_mask > 0.5
     non_skin_ind = roi_skin_mask <= 0.5
-
+    # skin is 1.0 and non-skin 0.0
     roi_skin_mask[skin_ind] = 1.0
     roi_skin_mask[non_skin_ind] = 0.0
 
@@ -170,7 +168,6 @@ def roi_skin_mask_creation(_file, in_dir, out_dir, show_figure=False):
     fig.savefig(roi_skin_mask_file_path[:-4] + '.png')
     if show_figure:
         plt.show()
-
 
     # Save it as .npy file
     np.save(roi_skin_mask_file_path, roi_skin_mask)

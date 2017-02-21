@@ -6,7 +6,7 @@ import sklearn
 
 balanced_data_count = 0
 
-
+# iterate over all files in folder
 def multi_npy_data_balancing(_signal_data_dir, _skin_mask_data_dir, _out_balanced_dir, roi=False):
 
     for file in os.listdir(_signal_data_dir):
@@ -23,24 +23,30 @@ def multi_npy_data_balancing(_signal_data_dir, _skin_mask_data_dir, _out_balance
                 single_npy_data_balancing(file, _signal_file_path, _skin_mask_file_path, _out_balanced_dir)
 
 
+# applying skin-mask to set a class label for every sample
+# subsampling of non-skin class samples for balancing data
 def single_npy_data_balancing(_signal_file, _signal_file_path, _skin_mask_file_path, _out_balanced_dir):
 
     out_file_path = os.path.join(_out_balanced_dir, 'Balanced_' + _signal_file)
 
+    # load mask and pulse data of one video file
     signal_data = np.load(_signal_file_path)
     skin_mask_data = np.load(_skin_mask_file_path)
 
     print(signal_data.shape)
     print(skin_mask_data.shape)
 
-    # Replace NaNs with zero
+    # Replace remaining NaNs with zero
+    # there were still some left
     where_are_NaNs = np.isnan(signal_data)
     print('NaNs: ' + str(len(signal_data[where_are_NaNs])))
     signal_data[where_are_NaNs] = 0.0
 
-    # Where values are low
+    # Get indices of skin pixels
     skin_indices = skin_mask_data > 0
+    # Get indices of non-skin pixels
     non_skin_indices = skin_mask_data < 1
+
     skin_count = len(skin_mask_data[skin_indices])
     non_skin_count = len(skin_mask_data[non_skin_indices])
 
@@ -63,13 +69,14 @@ def single_npy_data_balancing(_signal_file, _signal_file_path, _skin_mask_file_p
     random_choice = np.random.choice(non_skin_count, size=skin_count, replace=False)
     subsampled_non_skin_signal_data = non_skin_signal_data[random_choice, :]
 
-    # Every
+    # Concatenate right labels to the samplerows
     final_skin_signal_data = np.concatenate((skin_signal_data, one_labels), axis=1)
     final_non_skin_signal_data = np.concatenate((subsampled_non_skin_signal_data, zero_labels), axis=1)
 
     print('Skin Samples shape: ' + str(final_skin_signal_data.shape))
     print('Non-Skin Samples shape: ' + str(final_non_skin_signal_data.shape))
 
+    # concatenate non-skin and skin data lists
     balanced_signal_data = np.concatenate((final_skin_signal_data, final_non_skin_signal_data))
 
     print(balanced_signal_data.shape)
@@ -83,6 +90,7 @@ def single_npy_data_balancing(_signal_file, _signal_file_path, _skin_mask_file_p
     print('Saving: ' + out_file_path)
     np.save(out_file_path, balanced_signal_data)
 
+    # to see how many samples are processed
     global balanced_data_count
     balanced_data_count += balanced_signal_data.shape[0]
 

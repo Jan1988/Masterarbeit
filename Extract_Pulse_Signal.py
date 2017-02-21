@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 
 from Video_Tools import load_video, get_video_dimensions
 from POS_Based_Method import extract_pos_based_method_improved
-from Helper_Tools import load_label_data, get_pulse_vals_from_label_data, compare_pulse_vals, eliminate_weak_skin, \
+from Helper_Tools import load_reference_data, get_pulse_vals_from_label_data, compare_pulse_vals, eliminate_weak_skin, \
     compare_with_skin_mask
 
 true_positives = 0
@@ -17,7 +17,7 @@ false_negatives = 0
 true_negatives = 0
 
 
-# Plot for Thesis Image Pixelwise
+# Plot for Thesis pixelwise Images
 def plot_and_save_results(_plot_title, last_frame, _bpm_map, _weak_skin_map, _strong_skin_map, save_to):
 
     bgr_frame = cv2.cvtColor(last_frame, cv2.COLOR_RGB2BGR)
@@ -62,6 +62,7 @@ def plot_and_save_results(_plot_title, last_frame, _bpm_map, _weak_skin_map, _st
     # scipy.misc.imsave(out_file_path[:-4] + '.png', bpm_map)
 
 
+# iterate over all files in folder
 def extr_multi_video_calculation(in_dir, out_dir, roi=False):
     for file in os.listdir(in_dir):
         in_file_path = os.path.join(in_dir, file)
@@ -75,24 +76,27 @@ def extr_multi_video_calculation(in_dir, out_dir, roi=False):
                 extr_single_video_calculation(file, in_file_path, out_dir)
 
 
-# For ROI
+# For ROIs
 def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
 
+    # determine how to devide frame into rois
     w_div = 16
     h_div = 8
 
+    # load video
     video_frames, fps = load_video(in_file_path)
     video_frames = video_frames[22:358]
     frame_count, width, height = get_video_dimensions(video_frames)
     w_steps = int(width / w_div)
     h_steps = int(height / h_div)
 
-    # Giant-ndarray for pulse-signals for height*width of a Videos
+    # Giant ndarray for pulse-signals for height*width of a Videos
     pulse_signal_data = np.zeros([h_div, w_div, 44], dtype='float64')
+    # BPM-map only for visualisation
     bpm_map = np.zeros((h_div, w_div), dtype='float64')
 
-    # Load all pulse value belonging to a certain video in array
-    pulse_lower, pulse_upper = get_pulse_vals_from_label_data(load_label_data(), in_file)
+    # Load all pulse values belonging to a certain video in array
+    pulse_lower, pulse_upper = get_pulse_vals_from_label_data(load_reference_data(), in_file)
 
 
     # For plotting the skin and pulse matrices
@@ -120,15 +124,18 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
             roi_ind_x = int(x / w_steps)
             roi_ind_y = int(y / h_steps)
 
+            # get roi volumes
             roi_time_series = video_frames[:, y:y+h_steps, x:x+w_steps]
             # Spatial Averaging
             roi_time_series_avg = np.mean(roi_time_series, axis=(1, 2))
 
+            # call POS-Function
             bpm, pruned_fft = extract_pos_based_method_improved(roi_time_series_avg, fps)
 
-            # for validating if extr method is the same as main method
+            # fill up bpm-map
             bpm_map[roi_ind_y, roi_ind_x] = bpm
 
+            # write extracted pulse frequencies to ndarray
             pulse_signal_data[roi_ind_y, roi_ind_x] = pruned_fft
 
             # For plotting the skin and pulse matrices
@@ -137,13 +144,15 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
 
         print("Fortschritt: %.2f %%" % ((x + 1.0) / width * 100.0))
 
-    # check neighbouring BPMs
+    # compare bpms with reference bpms lower and upper
     weak_skin_map = compare_pulse_vals(bpm_map, pulse_lower, pulse_upper)
+    # check neighbouring BPMs
     strong_skin_map = eliminate_weak_skin(weak_skin_map, skin_neighbors=3)
 
+    # For plotting the skin and pulse matrices
     out_file_path = os.path.join(out_dir, 'me_' + in_file[:-4])
     bgr_last_frame = cv2.cvtColor(last_frame_clone, cv2.COLOR_RGB2BGR)
-    # For plotting the skin and pulse matrices
+
     sub1.text(txt_coord_x, txt_coord_y, '(a)', color='white', fontsize=txt_fontsize, horizontalalignment='center',
               transform=sub1.transAxes)
     sub1.tick_params(axis='both', which='major', labelsize=tick_fontsize)
@@ -166,7 +175,8 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
     fig.savefig(out_file_path + '.png')
     plt.close()
 
-    # POS Metrics measure
+    # tp, fp, fn and tn of POS-Algorithm of one video
+    # is summed up with a global variable for all videos
     vid_true_positives, vid_false_positives, vid_false_negatives, vid_true_negatives = compare_with_skin_mask(file, weak_skin_map, h_div, w_div)
     global true_positives
     global false_positives
@@ -185,46 +195,47 @@ def extr_roi_single_video_calculation(in_file, in_file_path, out_dir):
 # For Pixelwise
 def extr_single_video_calculation(in_file, in_file_path, out_dir):
 
+    # load video
     video_frames, fps = load_video(in_file_path)
     video_frames = video_frames[22:358]
     frame_count, width, height = get_video_dimensions(video_frames)
 
 
-    # Giant-ndarray for pulse-signals for height*width of a Videos
+    # Giant ndarray for pulse-signals for height*width of a Videos
     pulse_signal_data = np.zeros([height, width, 44], dtype='float64')
-    # Only for visualizing
+    # BPM-map only for visualisation
     bpm_map = np.zeros([height, width], dtype='float16')
-
-    # # Do this on server
-    # video_frames = video_frames.astype('float32')
-    # video_frames += 1.0
 
     # For plotting the skin and pulse matrices
     last_frame = video_frames[frame_count - 1]
     last_frame_clone = last_frame.copy()
     # Load all pulse value belonging to a certain video in array
-    pulse_lower, pulse_upper = get_pulse_vals_from_label_data(load_label_data(), in_file)
+    pulse_lower, pulse_upper = get_pulse_vals_from_label_data(load_reference_data(), in_file)
 
     for x in range(0, width):
         for y in range(0, height):
 
+            # get pixel sequence
             px_time_series = video_frames[:, y, x]
 
+            # call POS-Function
             bpm, pruned_fft = extract_pos_based_method_improved(px_time_series, fps)
 
+            # write extracted pulse frequencies to ndarray
             pulse_signal_data[y, x] = pruned_fft
 
+            # fill up bpm-map
             bpm_map[y, x] = bpm
 
         print("Completed: %.2f %%" % ((x + 1.0) / width * 100.0))
 
-    # check neighbouring BPMs
+    # compare bpms with reference bpms lower and upper
     weak_skin_map = compare_pulse_vals(bpm_map, pulse_lower, pulse_upper)
+    # check neighbouring BPMs
     strong_skin_map = eliminate_weak_skin(weak_skin_map, skin_neighbors=5)
 
-    out_file_path = os.path.join(out_dir, 'no_nan_' + in_file[:-4])
-
     # For plotting the skin and pulse matrices
+    out_file_path = os.path.join(out_dir, 'no_nan_' + in_file[:-4])
     plot_title = in_file + ' BPM: ' + str(pulse_lower) + '-' + str(pulse_upper)
     plot_and_save_results(plot_title, last_frame_clone, bpm_map, weak_skin_map, strong_skin_map, out_file_path)
 
